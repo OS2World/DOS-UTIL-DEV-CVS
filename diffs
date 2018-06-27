@@ -1,0 +1,5263 @@
+Only in cvs-1.3: doc
+Only in DOS-OS2/lib: _mkdir.c
+Only in cvs-1.3/lib: alloca.c
+Only in cvs-1.3/lib: dup2.c
+diff -cr cvs-1.3/lib/fnmatch.c DOS-OS2/lib/fnmatch.c
+*** cvs-1.3/lib/fnmatch.c	Fri Apr 02 16:24:28 1993
+--- DOS-OS2/lib/fnmatch.c	Sun Mar 14 20:15:08 1993
+***************
+*** 22,28 ****
+  /* #include <ansidecl.h> */
+  /* @) */
+  #include <errno.h>
+! #include <fnmatch.h>
+  
+  #if !defined(__GNU_LIBRARY__) && !defined(STDC_HEADERS)
+  extern int errno;
+--- 22,28 ----
+  /* #include <ansidecl.h> */
+  /* @) */
+  #include <errno.h>
+! #include "fnmatch.h"
+  
+  #if !defined(__GNU_LIBRARY__) && !defined(STDC_HEADERS)
+  extern int errno;
+Only in cvs-1.3/lib: ftruncat.c
+Only in DOS-OS2/lib: getcwdsl.c
+diff -cr cvs-1.3/lib/getwd.c DOS-OS2/lib/getwd.c
+*** cvs-1.3/lib/getwd.c	Fri Apr 02 16:24:32 1993
+--- DOS-OS2/lib/getwd.c	Sun Mar 14 20:15:08 1993
+***************
+*** 23,31 ****
+--- 23,39 ----
+  
+  /* Get the current working directory into PATHNAME */
+  
++ #if defined(OS2) || defined(DOS)
++ char * getcwdsl(char *, size_t);
++ #endif
++ 
+  char *
+  getwd (pathname)
+       char *pathname;
+  {
++ #if defined(OS2) || defined(DOS)
++   return (getcwdsl(pathname, PATH_MAX));
++ #else
+    return (getcwd(pathname, PATH_MAX));
++ #endif  
+  }
+diff -cr cvs-1.3/lib/hostname.c DOS-OS2/lib/hostname.c
+*** cvs-1.3/lib/hostname.c	Fri Apr 02 16:24:32 1993
+--- DOS-OS2/lib/hostname.c	Sat Mar 13 21:39:16 1993
+***************
+*** 24,31 ****
+--- 24,34 ----
+  #include <strings.h>
+  #endif
+  
++ #if !defined(OS2) && !defined(DOS)
+  #include <sys/utsname.h>
++ #endif
+  
++ 
+  /* Put this host's name into NAME, using at most NAMELEN characters */
+  
+  int
+***************
+*** 33,38 ****
+--- 36,44 ----
+       char *name;
+       int namelen;
+  {
++ #if defined(OS2) || defined(DOS)
++   return -1;
++ #else
+    struct utsname ugnm;
+  
+    if (uname(&ugnm) < 0)
+***************
+*** 42,45 ****
+--- 48,53 ----
+    name[namelen-1] = '\0';
+  
+    return (0);
++ #endif
+  }
++ 
+Only in DOS-OS2/lib: makefile.bor
+Only in DOS-OS2/lib: makefile.os2
+Only in cvs-1.3/lib: mkdir.c
+Only in DOS-OS2/lib: pipe.c
+Only in cvs-1.3/lib: rename.c
+diff -cr cvs-1.3/lib/sighandl.c DOS-OS2/lib/sighandl.c
+*** cvs-1.3/lib/sighandl.c	Fri Apr 02 16:24:38 1993
+--- DOS-OS2/lib/sighandl.c	Sat Mar 13 21:39:24 1993
+***************
+*** 78,84 ****
+  
+  /* Define array of default signal vectors */
+  
+! #ifdef POSIX
+  static	struct sigaction	*SIG_defaults;
+  #else
+  #ifdef BSD_SIGNALS
+--- 78,84 ----
+  
+  /* Define array of default signal vectors */
+  
+! #if defined(POSIX) && !defined(DOS)
+  static	struct sigaction	*SIG_defaults;
+  #else
+  #ifdef BSD_SIGNALS
+***************
+*** 90,96 ****
+  
+  /* Critical section housekeeping */
+  static	int		SIG_crSectNest = 0;	/* Nesting level */
+! #ifdef POSIX
+  static	sigset_t	SIG_crSectMask;		/* Signal mask */
+  #else
+  static	int		SIG_crSectMask;		/* Signal mask */
+--- 90,96 ----
+  
+  /* Critical section housekeeping */
+  static	int		SIG_crSectNest = 0;	/* Nesting level */
+! #if defined(POSIX) && !defined(DOS)
+  static	sigset_t	SIG_crSectMask;		/* Signal mask */
+  #else
+  static	int		SIG_crSectMask;		/* Signal mask */
+***************
+*** 103,116 ****
+  static int SIG_init()
+  {
+  	int i;
+! #ifdef POSIX
+  	sigset_t sigset_test;
+  #endif
+  
+  	if (SIG_defaults && SIG_handlers)	/* already allocated */
+  		return (0);
+  
+! #ifdef POSIX
+  	(void) sigfillset(&sigset_test);
+  	for (i = 1; sigismember(&sigset_test, i) == 1; i++)
+  		;
+--- 103,116 ----
+  static int SIG_init()
+  {
+  	int i;
+! #if defined(POSIX) && !defined(DOS)
+  	sigset_t sigset_test;
+  #endif
+  
+  	if (SIG_defaults && SIG_handlers)	/* already allocated */
+  		return (0);
+  
+! #if defined(POSIX) && !defined(DOS)
+  	(void) sigfillset(&sigset_test);
+  	for (i = 1; sigismember(&sigset_test, i) == 1; i++)
+  		;
+***************
+*** 175,181 ****
+  {
+  	int			val;
+  	struct SIG_hlist	*this;
+! #ifdef POSIX
+  	struct sigaction	act;
+  	sigset_t		sigset_mask, sigset_omask;
+  #else
+--- 175,181 ----
+  {
+  	int			val;
+  	struct SIG_hlist	*this;
+! #if defined(POSIX) && !defined(DOS)
+  	struct sigaction	act;
+  	sigset_t		sigset_mask, sigset_omask;
+  #else
+***************
+*** 191,197 ****
+  	val = 0;
+  
+  	/* Block this signal while we look at handler chain */
+! #ifdef POSIX
+  	(void) sigemptyset(&sigset_mask);
+  	(void) sigaddset(&sigset_mask, sig);
+  	(void) sigprocmask(SIG_BLOCK, &sigset_mask, &sigset_omask);
+--- 191,197 ----
+  	val = 0;
+  
+  	/* Block this signal while we look at handler chain */
+! #if defined(POSIX) && !defined(DOS)
+  	(void) sigemptyset(&sigset_mask);
+  	(void) sigaddset(&sigset_mask, sig);
+  	(void) sigprocmask(SIG_BLOCK, &sigset_mask, &sigset_omask);
+***************
+*** 220,226 ****
+  
+  		if (SIG_handlers[sig] == (struct SIG_hlist *) NULL)
+  		{
+! #ifdef POSIX
+  			act.sa_handler = SIG_handle;
+  			(void) sigemptyset(&act.sa_mask);
+  			act.sa_flags = 0;
+--- 220,226 ----
+  
+  		if (SIG_handlers[sig] == (struct SIG_hlist *) NULL)
+  		{
+! #if defined(POSIX) && !defined(DOS)
+  			act.sa_handler = SIG_handle;
+  			(void) sigemptyset(&act.sa_mask);
+  			act.sa_flags = 0;
+***************
+*** 257,263 ****
+  	}
+  
+  	/* Unblock the signal */
+! #ifdef POSIX
+  	(void) sigprocmask(SIG_SETMASK, &sigset_omask, NULL);
+  #else
+  #ifdef BSD_SIGNALS
+--- 257,263 ----
+  	}
+  
+  	/* Unblock the signal */
+! #if defined(POSIX) && !defined(DOS)
+  	(void) sigprocmask(SIG_SETMASK, &sigset_omask, NULL);
+  #else
+  #ifdef BSD_SIGNALS
+***************
+*** 280,286 ****
+  	int			val;
+  	struct SIG_hlist	*this;
+  	struct SIG_hlist	*last;
+! #ifdef POSIX
+  	sigset_t		sigset_mask, sigset_omask;
+  #else
+  #ifdef BSD_SIGNALS
+--- 280,286 ----
+  	int			val;
+  	struct SIG_hlist	*this;
+  	struct SIG_hlist	*last;
+! #if defined(POSIX) && !defined(DOS)
+  	sigset_t		sigset_mask, sigset_omask;
+  #else
+  #ifdef BSD_SIGNALS
+***************
+*** 295,301 ****
+  	last = (struct SIG_hlist *) NULL;
+  
+  	/* Block this signal while we look at handler chain */
+! #ifdef POSIX
+  	(void) sigemptyset(&sigset_mask);
+  	(void) sigaddset(&sigset_mask, sig);
+  	(void) sigprocmask(SIG_BLOCK, &sigset_mask, &sigset_omask);
+--- 295,301 ----
+  	last = (struct SIG_hlist *) NULL;
+  
+  	/* Block this signal while we look at handler chain */
+! #if defined(POSIX) && !defined(DOS)
+  	(void) sigemptyset(&sigset_mask);
+  	(void) sigaddset(&sigset_mask, sig);
+  	(void) sigprocmask(SIG_BLOCK, &sigset_mask, &sigset_omask);
+***************
+*** 330,336 ****
+  	/* Restore default behavior if there are no registered handlers */
+  	if (SIG_handlers[sig] == (struct SIG_hlist *) NULL)
+  	{
+! #ifdef POSIX
+  		val = sigaction(sig, &SIG_defaults[sig],
+  				(struct sigaction *) NULL);
+  #else
+--- 330,336 ----
+  	/* Restore default behavior if there are no registered handlers */
+  	if (SIG_handlers[sig] == (struct SIG_hlist *) NULL)
+  	{
+! #if defined(POSIX) && !defined(DOS)
+  		val = sigaction(sig, &SIG_defaults[sig],
+  				(struct sigaction *) NULL);
+  #else
+***************
+*** 344,350 ****
+  	}
+  
+  	/* Unblock the signal */
+! #ifdef POSIX
+  	(void) sigprocmask(SIG_SETMASK, &sigset_omask, NULL);
+  #else
+  #ifdef BSD_SIGNALS
+--- 344,350 ----
+  	}
+  
+  	/* Unblock the signal */
+! #if defined(POSIX) && !defined(DOS)
+  	(void) sigprocmask(SIG_SETMASK, &sigset_omask, NULL);
+  #else
+  #ifdef BSD_SIGNALS
+***************
+*** 365,371 ****
+  	{
+  		if (SIG_crSectNest == 0)
+  		{
+! #ifdef POSIX
+  			sigset_t sigset_mask;
+  
+  			(void) sigfillset(&sigset_mask);
+--- 365,371 ----
+  	{
+  		if (SIG_crSectNest == 0)
+  		{
+! #if defined(POSIX) && !defined(DOS)
+  			sigset_t sigset_mask;
+  
+  			(void) sigfillset(&sigset_mask);
+***************
+*** 394,400 ****
+  		SIG_crSectNest--;
+  		if (SIG_crSectNest == 0)
+  		{
+! #ifdef POSIX
+  			(void) sigprocmask(SIG_SETMASK, &SIG_crSectMask, NULL);
+  #else
+  #ifdef BSD_SIGNALS
+--- 394,400 ----
+  		SIG_crSectNest--;
+  		if (SIG_crSectNest == 0)
+  		{
+! #if defined(POSIX) && !defined(DOS)
+  			(void) sigprocmask(SIG_SETMASK, &SIG_crSectMask, NULL);
+  #else
+  #ifdef BSD_SIGNALS
+Only in cvs-1.3/lib: strdup.c
+diff -cr cvs-1.3/lib/strippat.c DOS-OS2/lib/strippat.c
+*** cvs-1.3/lib/strippat.c	Fri Apr 02 16:24:38 1993
+--- DOS-OS2/lib/strippat.c	Sat Mar 13 21:39:26 1993
+***************
+*** 34,39 ****
+--- 34,58 ----
+  void strip_trailing_slashes();
+  #endif /* __STDC__ */
+  
++ #if defined(OS2) || defined(DOS)
++ /* OS/2 can generally use / too, but not in some places when commands
++  * are passed to CMD.EXE for execution (i.e. I/O redirection). */
++ #define DIRSEP           '\\'
++ #define DIRSEPSTR        "\\"
++ #define ISDIRSEP(c)      ((c) == DIRSEP || (c) == '/')
++ extern char *index_sep(char *);
++ extern char *rindex_sep(char *);
++ /*#define system(c)        (flushall(),system(c))*/
++ #else
++ #define DIRSEP           '/'
++ #define DIRSEPSTR        "/"
++ #define ISDIRSEP(c)      ((c) == DIRSEP)
++ #define index_sep(p)     index(p, DIRSEP)
++ #define rindex_sep(p)    rindex(p, DIRSEP)
++ #define stricmp          strcmp
++ #define strnicmp         strncmp
++ #endif
++ 
+  /* Remove unnecessary components from PATH. */
+  
+  void
+***************
+*** 43,53 ****
+    int stripped = 0;
+    char *cp, *slash;
+  
+!   for (cp = path; (slash = index(cp, '/')) != NULL; cp = slash)
+      {
+        *slash = '\0';
+        if ((!*cp && (cp != path || stripped)) ||
+! 	  strcmp(cp, ".") == 0 || strcmp(cp, "/") == 0)
+  	{
+  	  stripped = 1;
+  	  remove_component(cp, slash);
+--- 62,72 ----
+    int stripped = 0;
+    char *cp, *slash;
+  
+!   for (cp = path; (slash = index_sep(cp)) != NULL; cp = slash)
+      {
+        *slash = '\0';
+        if ((!*cp && (cp != path || stripped)) ||
+! 	  strcmp(cp, ".") == 0 || strcmp(cp, DIRSEPSTR) == 0)
+  	{
+  	  stripped = 1;
+  	  remove_component(cp, slash);
+***************
+*** 55,61 ****
+  	}
+        else
+  	{
+! 	  *slash++ = '/';
+  	}
+      }
+    strip_trailing_slashes(path);
+--- 74,80 ----
+  	}
+        else
+  	{
+! 	  *slash++ = DIRSEP;
+  	}
+      }
+    strip_trailing_slashes(path);
+diff -cr cvs-1.3/lib/stripsla.c DOS-OS2/lib/stripsla.c
+*** cvs-1.3/lib/stripsla.c	Fri Apr 02 16:24:38 1993
+--- DOS-OS2/lib/stripsla.c	Sun Mar 14 20:15:08 1993
+***************
+*** 30,35 ****
+    int last;
+  
+    last = strlen (path) - 1;
+!   while (last > 0 && path[last] == '/')
+      path[last--] = '\0';
+  }
+--- 30,35 ----
+    int last;
+  
+    last = strlen (path) - 1;
+!   while (last > 0 && (path[last] == '/' || path[last] == '\\'))
+      path[last--] = '\0';
+  }
+Only in DOS-OS2/lib: swap.asm
+Only in DOS-OS2/lib: swap.doc
+Only in DOS-OS2/lib: swap.h
+diff -cr cvs-1.3/lib/system.h DOS-OS2/lib/system.h
+*** cvs-1.3/lib/system.h	Fri Apr 02 16:24:40 1993
+--- DOS-OS2/lib/system.h	Sat Mar 13 21:39:32 1993
+***************
+*** 70,77 ****
+--- 70,83 ----
+  #endif
+  
+  #ifdef POSIX
++ #ifndef DOS
+  #include <unistd.h>
++ #endif
+  #include <limits.h>
++ #ifdef DOS
++ #include <dir.h>
++ #define PATH_MAX MAXPATH
++ #endif
+  #ifndef PATH_MAX
+  #define PATH_MAX pathconf ("/", _PC_PATH_MAX)
+  #endif
+diff -cr cvs-1.3/lib/wait.h DOS-OS2/lib/wait.h
+*** cvs-1.3/lib/wait.h	Fri Apr 02 16:24:40 1993
+--- DOS-OS2/lib/wait.h	Sat Mar 13 21:39:34 1993
+***************
+*** 15,21 ****
+     along with this program; if not, write to the Free Software
+     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.  */
+  
+! #ifdef POSIX
+  #include <sys/types.h>		/* For pid_t. */
+  #include <sys/wait.h>
+  #else
+--- 15,21 ----
+     along with this program; if not, write to the Free Software
+     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.  */
+  
+! #if defined(POSIX) && !defined(DOS)
+  #include <sys/types.h>		/* For pid_t. */
+  #include <sys/wait.h>
+  #else
+Only in DOS-OS2: makefile.bor
+Only in DOS-OS2: makefile.os2
+Only in DOS-OS2: readme.1st
+diff -cr cvs-1.3/src/add.c DOS-OS2/src/add.c
+*** cvs-1.3/src/add.c	Fri Apr 02 16:24:48 1993
+--- DOS-OS2/src/add.c	Mon Mar 22 16:26:42 1993
+***************
+*** 111,117 ****
+  	int begin_err = err;
+  
+  	user = argv[i];
+! 	if (index (user, '/') != NULL)
+  	{
+  	    error (0, 0,
+  	     "cannot add files with '/' in their name; %s not added", user);
+--- 111,117 ----
+  	int begin_err = err;
+  
+  	user = argv[i];
+! 	if (index_sep (user) != NULL)
+  	{
+  	    error (0, 0,
+  	     "cannot add files with '/' in their name; %s not added", user);
+***************
+*** 140,146 ****
+  		     * the same name.  If so, blow this request off.
+  		     */
+  		    char dname[PATH_MAX];
+! 		    (void) sprintf (dname, "%s/%s", repository, user);
+  		    if (isdir (dname))
+  		    {
+  			error (0, 0,
+--- 140,146 ----
+  		     * the same name.  If so, blow this request off.
+  		     */
+  		    char dname[PATH_MAX];
+! 		    (void) sprintf (dname, "%s%c%s", repository, DIRSEP, user);
+  		    if (isdir (dname))
+  		    {
+  			error (0, 0,
+***************
+*** 276,282 ****
+      char message[PATH_MAX + 100];
+      char *tag, *date;
+  
+!     if (index (dir, '/') != NULL)
+      {
+  	error (0, 0,
+  	       "directory %s not added; must be a direct sub-directory", dir);
+--- 276,282 ----
+      char message[PATH_MAX + 100];
+      char *tag, *date;
+  
+!     if (index_sep (dir) != NULL)
+      {
+  	error (0, 0,
+  	       "directory %s not added; must be a direct sub-directory", dir);
+***************
+*** 305,315 ****
+      if (isfile (CVSADM) || isfile (OCVSADM))
+      {
+  	error (0, 0,
+! 	       "%s/%s (or %s/%s) already exists", dir, CVSADM, dir, OCVSADM);
+  	goto out;
+      }
+  
+!     (void) sprintf (rcsdir, "%s/%s", repository, dir);
+      if (isfile (rcsdir) && !isdir (rcsdir))
+      {
+  	error (0, 0, "%s is not a directory; %s not added", rcsdir, dir);
+--- 305,316 ----
+      if (isfile (CVSADM) || isfile (OCVSADM))
+      {
+  	error (0, 0,
+! 	       "%s%c%s (or %s%c%s) already exists", 
+! 	       dir, DIRSEP, CVSADM, dir, DIRSEP, OCVSADM);
+  	goto out;
+      }
+  
+!     (void) sprintf (rcsdir, "%s%c%s", repository, DIRSEP, dir);
+      if (isfile (rcsdir) && !isdir (rcsdir))
+      {
+  	error (0, 0, "%s is not a directory; %s not added", rcsdir, dir);
+***************
+*** 398,403 ****
+--- 399,405 ----
+  {
+      char fname[PATH_MAX];
+      char line[MAXLINELEN];
++     mode_t omask;
+      FILE *fp;
+  
+      /*
+***************
+*** 405,415 ****
+       * perhaps, an awkward place to check for this, but other places are
+       * equally awkward.
+       */
+!     (void) sprintf (fname, "%s/%s/%s%s", repository, CVSATTIC, user, RCSEXT);
+      if (isreadable (fname))
+      {
+! 	error (0, 0, "there is an old file %s already in %s/%s", user,
+! 	       repository, CVSATTIC);
+  	return (1);
+      }
+  
+--- 407,418 ----
+       * perhaps, an awkward place to check for this, but other places are
+       * equally awkward.
+       */
+!     (void) sprintf (fname, "%s%c%s%c%s%s", repository, DIRSEP, CVSATTIC,
+! 		    DIRSEP, user, short_names ? RCSEXT_S : RCSEXT);
+      if (isreadable (fname))
+      {
+! 	error (0, 0, "there is an old file %s already in %s%c%s", user,
+! 	       repository, DIRSEP, CVSATTIC);
+  	return (1);
+      }
+  
+***************
+*** 419,425 ****
+      /*
+       * The options for the "add" command are store in the file CVS/user,p
+       */
+!     (void) sprintf (fname, "%s/%s%s", CVSADM, user, CVSEXT_OPT);
+      fp = open_file (fname, "w+");
+      if (fclose (fp) == EOF)
+  	error(1, errno, "cannot close %s", fname);
+--- 422,437 ----
+      /*
+       * The options for the "add" command are store in the file CVS/user,p
+       */
+! #if defined(OS2) || defined(DOS)
+! /* Use P and T subdir instead of p and t extensions */
+!     (void) sprintf (fname, "%s%c%s", CVSADM, DIRSEP, CVSEXT_OPT);
+!     omask = umask (2);
+!     mkdir (fname, 0777);
+!     (void) umask ((int) omask);
+!     (void) sprintf (fname, "%s%c%s%c%s", CVSADM, DIRSEP, CVSEXT_OPT, DIRSEP, user);
+! #else
+!     (void) sprintf (fname, "%s%c%s%s", CVSADM, DIRSEP, user, CVSEXT_OPT);
+! #endif
+      fp = open_file (fname, "w+");
+      if (fclose (fp) == EOF)
+  	error(1, errno, "cannot close %s", fname);
+***************
+*** 429,440 ****
+       * file user,t.  If the "message" argument is set, use it as the
+       * initial creation log (which typically describes the file).
+       */
+!     (void) sprintf (fname, "%s/%s%s", CVSADM, user, CVSEXT_LOG);
+      fp = open_file (fname, "w+");
+      if (*message && fputs (message, fp) == EOF)
+  	    error (1, errno, "cannot write to %s", fname);
+      if (fclose(fp) == EOF)
+!         error(1, errno, "cannot close %s", fname);
+  
+      /*
+       * Create the entry now, since this allows the user to interrupt us above
+--- 441,461 ----
+       * file user,t.  If the "message" argument is set, use it as the
+       * initial creation log (which typically describes the file).
+       */
+! #if defined(OS2) || defined(DOS)
+! /* Use P and T subdir instead of p and t extensions */
+!     (void) sprintf (fname, "%s%c%s", CVSADM, DIRSEP, CVSEXT_LOG);
+!     omask = umask (2);
+!     mkdir (fname, 0777);
+!     (void) umask ((int) omask);
+!     (void) sprintf (fname, "%s%c%s%c%s", CVSADM, DIRSEP, CVSEXT_LOG, DIRSEP, user);
+! #else
+!     (void) sprintf (fname, "%s%c%s%s", CVSADM, DIRSEP, user, CVSEXT_LOG);
+! #endif
+      fp = open_file (fname, "w+");
+      if (*message && fputs (message, fp) == EOF)
+  	    error (1, errno, "cannot write to %s", fname);
+      if (fclose(fp) == EOF)
+! 	error(1, errno, "cannot close %s", fname);
+  
+      /*
+       * Create the entry now, since this allows the user to interrupt us above
+diff -cr cvs-1.3/src/checkin.c DOS-OS2/src/checkin.c
+*** cvs-1.3/src/checkin.c	Fri Apr 02 16:24:48 1993
+--- DOS-OS2/src/checkin.c	Mon Mar 22 16:26:42 1993
+***************
+*** 36,42 ****
+      Vers_TS *vers;
+  
+      (void) printf ("Checking in %s;\n", file);
+!     (void) sprintf (fname, "%s/%s%s", CVSADM, CVSPREFIX, file);
+  
+      /*
+       * Move the user file to a backup file, so as to preserve its
+--- 36,42 ----
+      Vers_TS *vers;
+  
+      (void) printf ("Checking in %s;\n", file);
+!     (void) sprintf (fname, "%s%c%s%s", CVSADM, DIRSEP, short_names ? CVSPREFIX_S : CVSPREFIX, file);
+  
+      /*
+       * Move the user file to a backup file, so as to preserve its
+diff -cr cvs-1.3/src/checkout.c DOS-OS2/src/checkout.c
+*** cvs-1.3/src/checkout.c	Fri Apr 02 16:24:50 1993
+--- DOS-OS2/src/checkout.c	Mon Mar 22 16:26:44 1993
+***************
+*** 261,267 ****
+  	where = (char *) NULL;
+  	if (!isfile (CVSADM) && !isfile (OCVSADM))
+  	{
+! 	    (void) sprintf (repository, "%s/%s", CVSroot, CVSNULLREPOS);
+  	    if (!isfile (repository))
+  		(void) mkdir (repository, 0777);
+  	    Create_Admin (".", repository, (char *) NULL, (char *) NULL);
+--- 261,268 ----
+  	where = (char *) NULL;
+  	if (!isfile (CVSADM) && !isfile (OCVSADM))
+  	{
+! 	    (void) sprintf (repository, "%s%c%s", CVSroot, DIRSEP,
+! 			    CVSNULLREPOS);
+  	    if (!isfile (repository))
+  		(void) mkdir (repository, 0777);
+  	    Create_Admin (".", repository, (char *) NULL, (char *) NULL);
+***************
+*** 269,277 ****
+  	    {
+  		FILE *fp;
+  
+! 		fp = open_file (CVSADM_ENTSTAT, "w+");
+  		if (fclose(fp) == EOF)
+! 		    error(1, errno, "cannot close %s", CVSADM_ENTSTAT);
+  	    }
+  	}
+      }
+--- 270,281 ----
+  	    {
+  		FILE *fp;
+  
+! 		if (short_names)
+! 		    fp = open_file (CVSADM_ENTSTAT_S, "w+");
+! 		else
+! 		    fp = open_file (CVSADM_ENTSTAT, "w+");
+  		if (fclose(fp) == EOF)
+! 		    error(1, errno, "cannot close %s", short_names ? CVSADM_ENTSTAT_S : CVSADM_ENTSTAT);
+  	    }
+  	}
+      }
+***************
+*** 283,293 ****
+       * attempt to cd to the indicated place.  where then becomes simply the
+       * last component
+       */
+!     if (where != NULL && index (where, '/') != NULL)
+      {
+  	char *slash;
+  
+! 	slash = rindex (where, '/');
+  	*slash = '\0';
+  
+  	if (chdir (where) < 0)
+--- 287,297 ----
+       * attempt to cd to the indicated place.  where then becomes simply the
+       * last component
+       */
+!     if (where != NULL && index_sep(where) != NULL)
+      {
+  	char *slash;
+  
+! 	slash = rindex_sep (where);
+  	*slash = '\0';
+  
+  	if (chdir (where) < 0)
+***************
+*** 346,352 ****
+       */
+  
+      /* set up the repository (maybe) for the bottom directory */
+!     (void) sprintf (repository, "%s/%s", CVSroot, argv[0]);
+  
+      /* save the original value of preload_update_dir */
+      if (preload_update_dir != NULL)
+--- 350,359 ----
+       */
+  
+      /* set up the repository (maybe) for the bottom directory */
+!     if (short_names)
+! 	(void) sprintf (repository, "%s%c%s%cRCS", CVSroot, DIRSEP, argv[0], DIRSEP);
+!     else
+! 	(void) sprintf (repository, "%s%c%s", CVSroot, DIRSEP, argv[0]);
+  
+      /* save the original value of preload_update_dir */
+      if (preload_update_dir != NULL)
+***************
+*** 358,367 ****
+  	char file[PATH_MAX];
+  
+  	/* if mfile is really a path, straighten it out first */
+! 	if ((cp = rindex (mfile, '/')) != NULL)
+  	{
+  	    *cp = 0;
+! 	    (void) strcat (repository, "/");
+  	    (void) strcat (repository, mfile);
+  
+  	    /*
+--- 365,374 ----
+  	char file[PATH_MAX];
+  
+  	/* if mfile is really a path, straighten it out first */
+! 	if ((cp = rindex_sep(mfile)) != NULL)
+  	{
+  	    *cp = 0;
+! 	    (void) strcat (repository, DIRSEPSTR);
+  	    (void) strcat (repository, mfile);
+  
+  	    /*
+***************
+*** 377,392 ****
+  	    if (!shorten)
+  	    {
+  		if (where != NULL)
+! 		    (void) sprintf (xwhere, "%s/%s", where, mfile);
+  		else
+! 		    (void) sprintf (xwhere, "%s/%s", mwhere, mfile);
+  		where = xwhere;
+  	    }
+  	    else
+  	    {
+  		char *slash;
+  
+! 		if ((slash = rindex (mfile, '/')) != NULL)
+  		    mwhere = slash + 1;
+  		else
+  		    mwhere = mfile;
+--- 384,399 ----
+  	    if (!shorten)
+  	    {
+  		if (where != NULL)
+! 		    (void) sprintf (xwhere, "%s%c%s", where, DIRSEP, mfile);
+  		else
+! 		    (void) sprintf (xwhere, "%s%c%s", mwhere, DIRSEP, mfile);
+  		where = xwhere;
+  	    }
+  	    else
+  	    {
+  		char *slash;
+  
+! 		if ((slash = rindex_sep(mfile)) != NULL)
+  		    mwhere = slash + 1;
+  		else
+  		    mwhere = mfile;
+***************
+*** 394,400 ****
+  	    mfile = cp + 1;
+  	}
+  
+! 	(void) sprintf (file, "%s/%s", repository, mfile);
+  	if (isdir (file))
+  	{
+  
+--- 401,407 ----
+  	    mfile = cp + 1;
+  	}
+  
+! 	(void) sprintf (file, "%s%c%s", repository, DIRSEP, mfile);
+  	if (isdir (file))
+  	{
+  
+***************
+*** 415,423 ****
+  	    if (!shorten)
+  	    {
+  		if (where != NULL)
+! 		    (void) sprintf (xwhere, "%s/%s", where, mfile);
+  		else
+! 		    (void) sprintf (xwhere, "%s/%s", mwhere, mfile);
+  		where = xwhere;
+  	    }
+  	    else if (where == NULL)
+--- 422,430 ----
+  	    if (!shorten)
+  	    {
+  		if (where != NULL)
+! 		    (void) sprintf (xwhere, "%s%c%s", where, DIRSEP, mfile);
+  		else
+! 		    (void) sprintf (xwhere, "%s%c%s", mwhere, DIRSEP, mfile);
+  		where = xwhere;
+  	    }
+  	    else if (where == NULL)
+***************
+*** 448,454 ****
+       */
+      if (shorten && where == NULL)
+      {
+! 	if ((cp = rindex (argv[0], '/')) != NULL)
+  	{
+  	    (void) strcpy (xwhere, cp + 1);
+  	    where = xwhere;
+--- 455,461 ----
+       */
+      if (shorten && where == NULL)
+      {
+! 	if ((cp = rindex_sep (argv[0])) != NULL)
+  	{
+  	    (void) strcpy (xwhere, cp + 1);
+  	    where = xwhere;
+***************
+*** 471,477 ****
+      {
+  	char tmp[PATH_MAX];
+  
+! 	(void) sprintf (tmp, "%s/%s", preload_update_dir, where);
+  	free (preload_update_dir);
+  	preload_update_dir = xstrdup (tmp);
+      }
+--- 478,484 ----
+      {
+  	char tmp[PATH_MAX];
+  
+! 	(void) sprintf (tmp, "%s%c%s", preload_update_dir, DIRSEP, where);
+  	free (preload_update_dir);
+  	preload_update_dir = xstrdup (tmp);
+      }
+***************
+*** 498,505 ****
+  	 * elements exist in where. Big Black Magic
+  	 */
+  	prepath = xstrdup (repository);
+! 	cp = rindex (where, '/');
+! 	cp2 = rindex (prepath, '/');
+  	while (cp != NULL)
+  	{
+  	    cp = findslash (where, cp - 1);
+--- 505,512 ----
+  	 * elements exist in where. Big Black Magic
+  	 */
+  	prepath = xstrdup (repository);
+! 	cp = rindex_sep (where);
+! 	cp2 = rindex_sep (prepath);
+  	while (cp != NULL)
+  	{
+  	    cp = findslash (where, cp - 1);
+***************
+*** 534,542 ****
+  	    if (!noexec && *pargc > 1)
+  	    {
+  		Create_Admin (".", repository, (char *) NULL, (char *) NULL);
+! 		fp = open_file (CVSADM_ENTSTAT, "w+");
+  		if (fclose(fp) == EOF)
+! 		    error(1, errno, "cannot close %s", CVSADM_ENTSTAT);
+  	    }
+  	    else
+  		Create_Admin (".", repository, tag, date);
+--- 541,552 ----
+  	    if (!noexec && *pargc > 1)
+  	    {
+  		Create_Admin (".", repository, (char *) NULL, (char *) NULL);
+! 		if (short_names)
+! 		    fp = open_file (CVSADM_ENTSTAT_S, "w+");
+! 		else
+! 		    fp = open_file (CVSADM_ENTSTAT, "w+");
+  		if (fclose(fp) == EOF)
+! 		    error(1, errno, "cannot close %s", short_names ? CVSADM_ENTSTAT_S : CVSADM_ENTSTAT);
+  	    }
+  	    else
+  		Create_Admin (".", repository, tag, date);
+***************
+*** 544,553 ****
+--- 554,574 ----
+  	else
+  	{
+  	    char *repos;
++ #if defined(OS2) || defined(DOS)
++ 	    char *tmp1, *tmp2;
++ #endif
+  
+  	    /* get the contents of the previously existing repository */
+  	    repos = Name_Repository ((char *) NULL, preload_update_dir);
++ #if defined(OS2) || defined(DOS)
++ 	    for (tmp1 = repository, tmp2 = repos; *tmp1 != 0, *tmp2 != 0; tmp1++, tmp2++)
++ 		if ((tolower (*tmp1) != tolower (*tmp2)) &&
++ 		    (!ISDIRSEP (*tmp1) || !ISDIRSEP (*tmp2)))
++ 		    break;
++ 	    if (*tmp1 != 0 || *tmp2 != 0)
++ #else
+  	    if (strcmp (repository, repos) != 0)
++ #endif
+  	    {
+  		error (0, 0, "existing repository %s does not match %s",
+  		       repos, repository);
+***************
+*** 650,656 ****
+      char *start;
+      char *p;
+  {
+!     while ((int) p >= (int) start && *p != '/')
+  	p--;
+      if ((int) p < (int) start)
+  	return (NULL);
+--- 671,677 ----
+      char *start;
+      char *p;
+  {
+!     while ((int) p >= (int) start && *p != '/' && *p != '\\')
+  	p--;
+      if ((int) p < (int) start)
+  	return (NULL);
+***************
+*** 681,687 ****
+      (void) strcpy (path, dir);
+      (void) strcpy (path2, realdir);
+      for (cp = path, cp2 = path2;
+!     (slash = index (cp, '/')) != NULL && (slash2 = index (cp2, '/')) != NULL;
+  	 cp = slash + 1, cp2 = slash2 + 1)
+      {
+  	*slash = '\0';
+--- 702,708 ----
+      (void) strcpy (path, dir);
+      (void) strcpy (path2, realdir);
+      for (cp = path, cp2 = path2;
+!     (slash = index_sep(cp )) != NULL && (slash2 = index_sep(cp2)) != NULL;
+  	 cp = slash + 1, cp2 = slash2 + 1)
+      {
+  	*slash = '\0';
+***************
+*** 695,712 ****
+  	if (!isfile (CVSADM) && !isfile (OCVSADM) &&
+  	    strcmp (command_name, "export") != 0)
+  	{
+! 	    (void) sprintf (repository, "%s/%s", prepath, path2);
+  	    Create_Admin (".", repository, sticky ? (char *) NULL : tag,
+  			  sticky ? (char *) NULL : date);
+  	    if (!noexec)
+  	    {
+! 		fp = open_file (CVSADM_ENTSTAT, "w+");
+  		if (fclose(fp) == EOF)
+! 		    error(1, errno, "cannot close %s", CVSADM_ENTSTAT);
+  	    }
+  	}
+! 	*slash = '/';
+! 	*slash2 = '/';
+      }
+      (void) mkdir (cp, 0777);
+      if (chdir (cp) < 0)
+--- 716,736 ----
+  	if (!isfile (CVSADM) && !isfile (OCVSADM) &&
+  	    strcmp (command_name, "export") != 0)
+  	{
+! 	    (void) sprintf (repository, "%s%c%s", prepath, DIRSEP, path2);
+  	    Create_Admin (".", repository, sticky ? (char *) NULL : tag,
+  			  sticky ? (char *) NULL : date);
+  	    if (!noexec)
+  	    {
+! 		if (short_names)
+! 		    fp = open_file (CVSADM_ENTSTAT_S, "w+");
+! 		else
+! 		    fp = open_file (CVSADM_ENTSTAT, "w+");
+  		if (fclose(fp) == EOF)
+! 		    error(1, errno, "cannot close %s", short_names ? CVSADM_ENTSTAT_S : CVSADM_ENTSTAT);
+  	    }
+  	}
+! 	*slash = DIRSEP;
+! 	*slash2 = DIRSEP;
+      }
+      (void) mkdir (cp, 0777);
+      if (chdir (cp) < 0)
+diff -cr cvs-1.3/src/commit.c DOS-OS2/src/commit.c
+*** cvs-1.3/src/commit.c	Fri Apr 02 16:24:50 1993
+--- DOS-OS2/src/commit.c	Mon Mar 22 16:26:44 1993
+***************
+*** 597,603 ****
+  	return (err);
+  
+      /* run any pre-commit checks */
+!     if ((n = Parse_Info (CVSROOTADM_COMMITINFO, repos, precommit_proc, 1)) > 0)
+      {
+  	error (0, 0, "Pre-commit check failed");
+  	err += n;
+--- 597,603 ----
+  	return (err);
+  
+      /* run any pre-commit checks */
+!     if ((n = Parse_Info (short_names ? CVSROOTADM_COMMITINFO_S : CVSROOTADM_COMMITINFO, repos, precommit_proc, 1)) > 0)
+      {
+  	error (0, 0, "Pre-commit check failed");
+  	err += n;
+***************
+*** 720,725 ****
+--- 720,726 ----
+  
+  /*
+   * Log the commit and clean up the update list
++  * Also remove P and T subdirs
+   */
+  /* ARGSUSED */
+  static int
+***************
+*** 731,737 ****
+--- 732,745 ----
+      List *ulist, *cilist;
+      char *xtag = (char *) NULL;
+      Node *p;
++     char tmp[PATH_MAX];
+  
++ #if defined(OS2) || defined(DOS)
++     (void) sprintf (tmp, "%s%c%s", CVSADM, DIRSEP, CVSEXT_OPT);
++     rmdir (tmp);
++     (void) sprintf (tmp, "%s%c%s", CVSADM, DIRSEP, CVSEXT_LOG);
++     rmdir (tmp);
++ #endif
+      p = findnode (mulist, update_dir);
+      if (p != NULL)
+      {
+***************
+*** 761,767 ****
+  	char *repository;
+  
+  	/* It is not an error if Checkin.prog does not exist.  */
+! 	if ((fp = fopen (CVSADM_CIPROG, "r")) != NULL)
+  	{
+  	    if (fgets (line, sizeof (line), fp) != NULL)
+  	    {
+--- 769,775 ----
+  	char *repository;
+  
+  	/* It is not an error if Checkin.prog does not exist.  */
+! 	if ((fp = fopen (short_names ? CVSADM_CIPROG_S : CVSADM_CIPROG, "r")) != NULL)
+  	{
+  	    if (fgets (line, sizeof (line), fp) != NULL)
+  	    {
+***************
+*** 899,909 ****
+      else
+      {
+  	/* no symbolic tag specified; really move it into the Attic */
+! 	(void) sprintf (tmp, "%s/%s", repository, CVSATTIC);
+  	omask = umask (2);
+  	(void) mkdir (tmp, 0777);
+  	(void) umask (omask);
+! 	(void) sprintf (tmp, "%s/%s/%s%s", repository, CVSATTIC, file, RCSEXT);
+  
+  	if ((strcmp (rcs, tmp) == 0 || rename (rcs, tmp) != -1) ||
+  	    (!isreadable (rcs) && isreadable (tmp)))
+--- 907,918 ----
+      else
+      {
+  	/* no symbolic tag specified; really move it into the Attic */
+! 	(void) sprintf (tmp, "%s%c%s", repository, DIRSEP, CVSATTIC);
+  	omask = umask (2);
+  	(void) mkdir (tmp, 0777);
+  	(void) umask (omask);
+! 	(void) sprintf (tmp, "%s%c%s%c%s%s", repository, DIRSEP, CVSATTIC, 
+! 			DIRSEP, file, short_names ? RCSEXT_S : RCSEXT);
+  
+  	if ((strcmp (rcs, tmp) == 0 || rename (rcs, tmp) != -1) ||
+  	    (!isreadable (rcs) && isreadable (tmp)))
+***************
+*** 935,944 ****
+  		   message, entries);
+      if (ret == 0)
+      {
+! 	(void) sprintf (tmp, "%s/%s%s", CVSADM, file, CVSEXT_OPT);
+  	(void) unlink_file (tmp);
+! 	(void) sprintf (tmp, "%s/%s%s", CVSADM, file, CVSEXT_LOG);
+  	(void) unlink_file (tmp);
+      }
+      else
+  	fixaddfile (file, repository);
+--- 944,960 ----
+  		   message, entries);
+      if (ret == 0)
+      {
+! #if defined(OS2) || defined(DOS)
+! 	(void) sprintf (tmp, "%s%c%s%c%s", CVSADM, DIRSEP, CVSEXT_OPT, DIRSEP, file);
+! 	(void) unlink_file (tmp);
+! 	(void) sprintf (tmp, "%s%c%s%c%s", CVSADM, DIRSEP, CVSEXT_LOG, DIRSEP, file);
+! 	(void) unlink_file (tmp);
+! #else
+! 	(void) sprintf (tmp, "%s%c%s%s", CVSADM, DIRSEP, file, CVSEXT_OPT);
+  	(void) unlink_file (tmp);
+! 	(void) sprintf (tmp, "%s%c%s%s", CVSADM, DIRSEP, file, CVSEXT_LOG);
+  	(void) unlink_file (tmp);
++ #endif
+      }
+      else
+  	fixaddfile (file, repository);
+***************
+*** 1030,1047 ****
+  
+      if (tag)
+      {
+! 	(void) sprintf(rcs, "%s/%s", repository, CVSATTIC);
+  	omask = umask (2);
+  	(void) mkdir (rcs, 0777);
+  	(void) umask (omask);
+! 	(void) sprintf (rcs, "%s/%s/%s%s", repository, CVSATTIC, file, RCSEXT);
+      }
+      else
+  	locate_rcs (file, repository, rcs);
+  
+      run_setup ("%s%s -i", Rcsbin, RCS);
+!     run_args ("-t%s/%s%s", CVSADM, file, CVSEXT_LOG);
+!     (void) sprintf (fname, "%s/%s%s", CVSADM, file, CVSEXT_OPT);
+      fp = open_file (fname, "r");
+      while (fgets (fname, sizeof (fname), fp) != NULL)
+      {
+--- 1046,1069 ----
+  
+      if (tag)
+      {
+! 	(void) sprintf(rcs, "%s%c%s", repository, DIRSEP, CVSATTIC);
+  	omask = umask (2);
+  	(void) mkdir (rcs, 0777);
+  	(void) umask (omask);
+! 	(void) sprintf (rcs, "%s%c%s%c%s%s", repository, DIRSEP, CVSATTIC, 
+! 			DIRSEP, file, short_names ? RCSEXT_S : RCSEXT);
+      }
+      else
+  	locate_rcs (file, repository, rcs);
+  
+      run_setup ("%s%s -i", Rcsbin, RCS);
+! #if defined(OS2) || defined(DOS)
+!     run_args ("-t%s%c%s%c%s", CVSADM, DIRSEP, CVSEXT_LOG, DIRSEP, file);
+!     (void) sprintf (fname, "%s%c%s%c%s", CVSADM, DIRSEP, CVSEXT_OPT, DIRSEP, file);
+! #else
+!     run_args ("-t%s%c%s%s", CVSADM, DIRSEP, file, CVSEXT_LOG);
+!     (void) sprintf (fname, "%s%c%s%s", CVSADM, DIRSEP, file, CVSEXT_OPT);
+! #endif
+      fp = open_file (fname, "r");
+      while (fgets (fname, sizeof (fname), fp) != NULL)
+      {
+***************
+*** 1219,1229 ****
+      char *repository;
+      char *rcs;
+  {
+!     (void) sprintf (rcs, "%s/%s%s", repository, file, RCSEXT);
+      if (!isreadable (rcs))
+      {
+! 	(void) sprintf (rcs, "%s/%s/%s%s", repository, CVSATTIC, file, RCSEXT);
+  	if (!isreadable (rcs))
+! 	    (void) sprintf (rcs, "%s/%s%s", repository, file, RCSEXT);
+      }
+  }
+--- 1241,1252 ----
+      char *repository;
+      char *rcs;
+  {
+!     (void) sprintf (rcs, "%s%c%s%s", repository, DIRSEP, file, short_names ? RCSEXT_S : RCSEXT);
+      if (!isreadable (rcs))
+      {
+! 	(void) sprintf (rcs, "%s%c%s%c%s%s", repository, DIRSEP, CVSATTIC, 
+! 			DIRSEP, file, short_names ? RCSEXT_S : RCSEXT);
+  	if (!isreadable (rcs))
+! 	    (void) sprintf (rcs, "%s%c%s%s", repository, DIRSEP, file, short_names ? RCSEXT_S : RCSEXT);
+      }
+  }
+diff -cr cvs-1.3/src/config.h DOS-OS2/src/config.h
+*** cvs-1.3/src/config.h	Fri Apr 02 16:24:50 1993
+--- DOS-OS2/src/config.h	Sun Jul 11 15:04:32 1993
+***************
+*** 118,124 ****
+   * is reasonable).
+   */
+  #ifndef EDITOR_DFLT
+! #define	EDITOR_DFLT	"vi"
+  #endif
+  
+  /*
+--- 118,124 ----
+   * is reasonable).
+   */
+  #ifndef EDITOR_DFLT
+! #define	EDITOR_DFLT	"emacs"
+  #endif
+  
+  /*
+***************
+*** 173,179 ****
+   * out the lines below.
+   */
+  #ifndef CVS_BADROOT
+! #define	CVS_BADROOT
+  #endif
+  
+  /*
+--- 173,179 ----
+   * out the lines below.
+   */
+  #ifndef CVS_BADROOT
+! /* #define	CVS_BADROOT */
+  #endif
+  
+  /*
+diff -cr cvs-1.3/src/create_a.c DOS-OS2/src/create_a.c
+*** cvs-1.3/src/create_a.c	Fri Apr 02 16:24:50 1993
+--- DOS-OS2/src/create_a.c	Mon Mar 22 16:26:44 1993
+***************
+*** 35,41 ****
+  	error (1, 0, "there is no repository %s", repository);
+  
+      if (dir != NULL)
+! 	(void) sprintf (tmp, "%s/%s", dir, CVSADM);
+      else
+  	(void) strcpy (tmp, CVSADM);
+  
+--- 35,41 ----
+  	error (1, 0, "there is no repository %s", repository);
+  
+      if (dir != NULL)
+! 	(void) sprintf (tmp, "%s%c%s", dir, DIRSEP, CVSADM);
+      else
+  	(void) strcpy (tmp, CVSADM);
+  
+***************
+*** 44,50 ****
+      else
+      {
+  	if (dir != NULL)
+! 	    (void) sprintf (tmp, "%s/%s", dir, OCVSADM);
+  	else
+  	    (void) strcpy (tmp, OCVSADM);
+  
+--- 44,50 ----
+      else
+      {
+  	if (dir != NULL)
+! 	    (void) sprintf (tmp, "%s%c%s", dir, DIRSEP, OCVSADM);
+  	else
+  	    (void) strcpy (tmp, OCVSADM);
+  
+***************
+*** 53,67 ****
+      }
+  
+      if (dir != NULL)
+! 	(void) sprintf (tmp, "%s/%s", dir, CVSADM);
+      else
+  	(void) strcpy (tmp, CVSADM);
+      make_directory (tmp);
+  
+      if (dir != NULL)
+! 	(void) sprintf (tmp, "%s/%s", dir, CVSADM_REP);
+      else
+! 	(void) strcpy (tmp, CVSADM_REP);
+      fout = open_file (tmp, "w+");
+      cp = repository;
+      strip_path (cp);
+--- 53,67 ----
+      }
+  
+      if (dir != NULL)
+! 	(void) sprintf (tmp, "%s%c%s", dir, DIRSEP, CVSADM);
+      else
+  	(void) strcpy (tmp, CVSADM);
+      make_directory (tmp);
+  
+      if (dir != NULL)
+! 	(void) sprintf (tmp, "%s%c%s", dir, DIRSEP, short_names ? CVSADM_REP_S : CVSADM_REP);
+      else
+! 	(void) strcpy (tmp, short_names ? CVSADM_REP_S : CVSADM_REP);
+      fout = open_file (tmp, "w+");
+      cp = repository;
+      strip_path (cp);
+***************
+*** 75,81 ****
+      {
+  	char path[PATH_MAX];
+  
+! 	(void) sprintf (path, "%s/", CVSroot);
+  	if (strncmp (repository, path, strlen (path)) == 0)
+  	    cp = repository + strlen (path);
+      }
+--- 75,81 ----
+      {
+  	char path[PATH_MAX];
+  
+! 	(void) sprintf (path, "%s%c", CVSroot, DIRSEP);
+  	if (strncmp (repository, path, strlen (path)) == 0)
+  	    cp = repository + strlen (path);
+      }
+***************
+*** 88,94 ****
+  
+      /* now, do the Entries file */
+      if (dir != NULL)
+! 	(void) sprintf (tmp, "%s/%s", dir, CVSADM_ENT);
+      else
+  	(void) strcpy (tmp, CVSADM_ENT);
+      fout = open_file (tmp, "w+");
+--- 88,94 ----
+  
+      /* now, do the Entries file */
+      if (dir != NULL)
+! 	(void) sprintf (tmp, "%s%c%s", dir, DIRSEP, CVSADM_ENT);
+      else
+  	(void) strcpy (tmp, CVSADM_ENT);
+      fout = open_file (tmp, "w+");
+Only in DOS-OS2/src: cvs.def
+diff -cr cvs-1.3/src/cvs.h DOS-OS2/src/cvs.h
+*** cvs-1.3/src/cvs.h	Fri Apr 02 16:24:52 1993
+--- DOS-OS2/src/cvs.h	Fri Jun 04 18:46:50 1993
+***************
+*** 1,9 ****
+! /* @(#)cvs.h 1.72 92/03/31	 */
+  
+  #include "system.h"
+  #include <stdio.h>
+  #include <ctype.h>
+  #include <pwd.h>
+  #include <signal.h>
+  #include "hash.h"
+  #include "rcs.h"
+--- 1,17 ----
+! /* @(#)cvs.h 1.72 92/03/31   */
+  
++ #if defined(DOS) || defined(OS2)
++ #undef getcwd
++ #define getcwd getcwdsl
++ #endif
+  #include "system.h"
+  #include <stdio.h>
+  #include <ctype.h>
++ #if defined(DOS)
++ #include <dir.h>
++ #else
+  #include <pwd.h>
++ #endif
+  #include <signal.h>
+  #include "hash.h"
+  #include "rcs.h"
+***************
+*** 22,29 ****
+  #undef PATH_MAX
+  #ifdef MAXPATHLEN
+  #define	PATH_MAX MAXPATHLEN+2
+  #else
+! #define	PATH_MAX 1024+2
+  #endif
+  
+  /* just in case this implementation does not define this */
+--- 30,39 ----
+  #undef PATH_MAX
+  #ifdef MAXPATHLEN
+  #define	PATH_MAX MAXPATHLEN+2
++ #elif defined(MAXPATH)
++ #define PATH_MAX MAXPATH+2
+  #else
+! #define PATH_MAX 1024+2
+  #endif
+  
+  /* just in case this implementation does not define this */
+***************
+*** 39,54 ****
+  #define	PTR	char *
+  #endif
+  
+  /*
+   * Copyright (c) 1992, Brian Berliner and Jeff Polk
+   * Copyright (c) 1989-1992, Brian Berliner
+!  * 
+   * You may distribute under the terms of the GNU General Public License as
+   * specified in the README file that comes with the CVS 1.3 kit.
+   * 
+   * Definitions for the CVS Administrative directory and the files it contains.
+   * Here as #define's to make changing the names a simple task.
+   */
+  #define	CVSADM		"CVS"
+  #define	CVSADM_ENT	"CVS/Entries"
+  #define	CVSADM_ENTBAK	"CVS/Entries.Backup"
+--- 49,92 ----
+  #define	PTR	char *
+  #endif
+  
++ #if defined(OS2) || defined(DOS)
++ /* OS/2 can generally use / too, but not in some places when commands
++  * are passed to CMD.EXE for execution (i.e. I/O redirection). */
++ #define DIRSEP           '\\'
++ #define DIRSEPSTR        "\\"
++ #define ISDIRSEP(c)      ((c) == DIRSEP || (c) == '/')
++ extern char *index_sep(char *);
++ extern char *rindex_sep(char *);
++ /*#define system(c)        (flushall(),system(c))*/
++ #ifndef DOS
++ #define chmod( x, y)     _chmod( x, y)
++ #endif
++ #else
++ #define DIRSEP           '/'
++ #define DIRSEPSTR        "/"
++ #define ISDIRSEP(c)      ((c) == DIRSEP)
++ #define index_sep(p)     index(p, DIRSEP)
++ #define rindex_sep(p)    rindex(p, DIRSEP)
++ #define stricmp          strcmp
++ #define strnicmp         strncmp
++ #endif
++ 
+  /*
+   * Copyright (c) 1992, Brian Berliner and Jeff Polk
+   * Copyright (c) 1989-1992, Brian Berliner
+!  *
+   * You may distribute under the terms of the GNU General Public License as
+   * specified in the README file that comes with the CVS 1.3 kit.
+   * 
+   * Definitions for the CVS Administrative directory and the files it contains.
+   * Here as #define's to make changing the names a simple task.
++  * *_S names are used for short names.
+   */
++ #define CVSADM_ENTBAK_S   "CVS/Entries.Bak"
++ #define CVSADM_ENTSTAT_S  "CVS/Entries.Sta"
++ #define CVSADM_REP_S      "CVS/Reposit.ory"
++ #define CVSADM_CIPROG_S   "CVS/Checkin.prg"
++ #define CVSADM_UPROG_S    "CVS/Update.prg"
+  #define	CVSADM		"CVS"
+  #define	CVSADM_ENT	"CVS/Entries"
+  #define	CVSADM_ENTBAK	"CVS/Entries.Backup"
+***************
+*** 63,70 ****
+--- 101,113 ----
+   * cleaned up during the transition
+   */
+  #define	OCVSADM		"CVS.adm"	/* for CVS 1.2 and earlier */
++ #if defined(OS2) || defined(DOS)
++ #define	CVSADM_FILE	"CVS\\Files"
++ #define	CVSADM_MOD	"CVS\\Mod"
++ #else /* not OS2 */
+  #define	CVSADM_FILE	"CVS/Files"
+  #define	CVSADM_MOD	"CVS/Mod"
++ #endif /* OS2 */
+  
+  /*
+   * Definitions for the CVSROOT Administrative directory and the files it
+***************
+*** 72,85 ****
+   * environment variable, and holds global administration information for the
+   * entire source repository beginning at $CVSROOT.
+   */
+  #define	CVSROOTADM		"CVSROOT"
+  #define	CVSROOTADM_MODULES	"modules"
+  #define	CVSROOTADM_LOGINFO	"loginfo"
+  #define	CVSROOTADM_RCSINFO	"rcsinfo"
+- #define CVSROOTADM_COMMITINFO	"commitinfo"
+  #define	CVSROOTADM_EDITINFO	"editinfo"
+  #define	CVSROOTADM_HISTORY	"history"
+! #define	CVSROOTADM_IGNORE	"cvsignore"
+  #define CVSNULLREPOS		"Emptydir"	/* an empty directory */
+  
+  /* support for the modules file (CVSROOTADM_MODULES) */
+--- 115,130 ----
+   * environment variable, and holds global administration information for the
+   * entire source repository beginning at $CVSROOT.
+   */
++ #define CVSROOTADM_COMMITINFO_S "commitin.fo"
++ #define CVSROOTADM_COMMITINFO   "commitinfo"
+  #define	CVSROOTADM		"CVSROOT"
+  #define	CVSROOTADM_MODULES	"modules"
+  #define	CVSROOTADM_LOGINFO	"loginfo"
+  #define	CVSROOTADM_RCSINFO	"rcsinfo"
+  #define	CVSROOTADM_EDITINFO	"editinfo"
+  #define	CVSROOTADM_HISTORY	"history"
+! #define CVSROOTADM_IGNORE_S     "ignore.cvs"
+! #define CVSROOTADM_IGNORE       "cvsignore"
+  #define CVSNULLREPOS		"Emptydir"	/* an empty directory */
+  
+  /* support for the modules file (CVSROOTADM_MODULES) */
+***************
+*** 94,105 ****
+  
+  /* Other CVS file names */
+  #define	CVSATTIC	"Attic"
+  #define	CVSLCK		"#cvs.lock"
+  #define	CVSTFL		"#cvs.tfl"
+  #define	CVSRFL		"#cvs.rfl"
+  #define	CVSWFL		"#cvs.wfl"
+- #define	CVSEXT_OPT	",p"
+- #define	CVSEXT_LOG	",t"
+  #define	CVSPREFIX	",,"
+  #define CVSDOTIGNORE	".cvsignore"
+  
+--- 139,162 ----
+  
+  /* Other CVS file names */
+  #define	CVSATTIC	"Attic"
++ #define TMPPREFIX	"cvs"
++ #if defined(OS2) || defined(DOS)
++ #define CVSEXT_OPT      "P"
++ #define CVSEXT_LOG      "T"
++ #else
++ #define CVSEXT_OPT      ",p"
++ #define CVSEXT_LOG      ",t"
++ #endif
++ #define CVSLCK_S	"#cvslock"
++ #define CVSTFL_S	"tfl"
++ #define CVSRFL_S	"rfl"
++ #define CVSWFL_S	"wfl"
++ #define	CVSPREFIX_S	""
++ #define CVSDOTIGNORE_S  "ignore.cvs"
+  #define	CVSLCK		"#cvs.lock"
+  #define	CVSTFL		"#cvs.tfl"
+  #define	CVSRFL		"#cvs.rfl"
+  #define	CVSWFL		"#cvs.wfl"
+  #define	CVSPREFIX	",,"
+  #define CVSDOTIGNORE	".cvsignore"
+  
+***************
+*** 108,115 ****
+--- 165,177 ----
+  #define	CVSLCKAGE	(60*60)		/* 1-hour old lock files cleaned up */
+  #define	CVSLCKSLEEP	30		/* wait 30 seconds before retrying */
+  #define	CVSBRANCH	"1.1.1"		/* RCS branch used for vendor srcs */
++ #define BAKPREFIX_S	"Merge.Bak"
+  #define	BAKPREFIX	".#"		/* when rcsmerge'ing */
++ #if defined(OS2) || defined(DOS)
++ #define	DEVNULL		"\\dev\\nul"
++ #else /* not OS2 */
+  #define	DEVNULL		"/dev/null"
++ #endif /* OS2 */
+  
+  #define	FALSE		0
+  #define	TRUE		1
+***************
+*** 143,149 ****
+--- 205,215 ----
+   * 
+   * If the CVSROOT environment variable is set, it overrides this define.
+   */
++ #if defined(OS2) || defined(DOS)
++ #define	REPOS_STRIP	"/master/"
++ #else /* not OS2 */
+  #define	REPOS_STRIP	"/master/"
++ #endif /* OS2 */
+  
+  /*
+   * The maximum number of files per each CVS directory. This is mainly for
+***************
+*** 153,159 ****
+  #define	MAXFILEPERDIR	3000
+  #define	MAXLINELEN	5000		/* max input line from a file */
+  #define	MAXPROGLEN	30000		/* max program length to system() */
+! #define	MAXLISTLEN	40000		/* For [A-Z]list holders */
+  #define	MAXMESGLEN	10000		/* max RCS log message size */
+  #define MAXDATELEN	50		/* max length for a date */
+  
+--- 219,225 ----
+  #define	MAXFILEPERDIR	3000
+  #define	MAXLINELEN	5000		/* max input line from a file */
+  #define	MAXPROGLEN	30000		/* max program length to system() */
+! #define MAXLISTLEN      30000           /* For [A-Z]list holders */
+  #define	MAXMESGLEN	10000		/* max RCS log message size */
+  #define MAXDATELEN	50		/* max length for a date */
+  
+***************
+*** 253,258 ****
+--- 319,325 ----
+  extern int really_quiet, quiet;
+  extern int use_editor;
+  extern int cvswrite;
++ extern int short_names;
+  
+  extern int trace;			/* Show all commands */
+  extern int noexec;			/* Don't modify disk anywhere */
+***************
+*** 271,278 ****
+  char *Short_Repository (char *repository);
+  char *getcaller (void);
+  char *time_stamp (char *file);
+! char *xmalloc (int bytes);
+! char *xrealloc (char *ptr, int bytes);
+  char *xstrdup (char *str);
+  int No_Difference (char *file, Vers_TS * vers, List * entries);
+  int Parse_Info (char *infofile, char *repository, int (*callproc) (), int all);
+--- 338,345 ----
+  char *Short_Repository (char *repository);
+  char *getcaller (void);
+  char *time_stamp (char *file);
+! char *xmalloc (size_t bytes);
+! char *xrealloc (char *ptr, size_t bytes);
+  char *xstrdup (char *str);
+  int No_Difference (char *file, Vers_TS * vers, List * entries);
+  int Parse_Info (char *infofile, char *repository, int (*callproc) (), int all);
+***************
+*** 436,438 ****
+--- 503,521 ----
+  void SIG_beginCrSect ();
+  void SIG_endCrSect ();
+  #endif				/* __STDC__ */
++ 
++ #ifdef DOS
++ #if __STDC__
++ FILE *popen (char *cmd, char *mode);
++ int pclose (FILE *ptr);
++ #else
++ FILE *popen ();
++ int pclose ();
++ #endif
++ #endif
++ 
++ #if defined(OS2) || defined(DOS)
++ #undef  mkdir 
++ #define mkdir( x, y)  _mkdir( x, y)
++ int _mkdir ( char *, int);
++ #endif
+diff -cr cvs-1.3/src/diff.c DOS-OS2/src/diff.c
+*** cvs-1.3/src/diff.c	Fri Apr 02 16:24:52 1993
+--- DOS-OS2/src/diff.c	Mon Mar 22 16:26:46 1993
+***************
+*** 312,318 ****
+      Vers_TS *vers;
+  {
+      Vers_TS *xvers;
+!     char tmp[L_tmpnam+1];
+  
+      /* free up any old use_rev* variables and reset 'em */
+      if (use_rev1)
+--- 312,318 ----
+      Vers_TS *vers;
+  {
+      Vers_TS *xvers;
+!     char *tmp;
+  
+      /* free up any old use_rev* variables and reset 'em */
+      if (use_rev1)
+***************
+*** 386,407 ****
+      run_setup ("%s%s -p -q %s -r%s", Rcsbin, RCS_CO,
+  	       *options ? options : vers->options, use_rev1);
+      run_arg (vers->srcfile->path);
+!     switch (run_exec (RUN_TTY, tmpnam (tmp), RUN_TTY, RUN_REALLY))
+      {
+  	case 0:				/* everything ok */
+  	    if (xcmp (file, tmp) == 0)
+  	    {
+  		(void) unlink (tmp);
+  		return (1);
+  	    }
+  	    break;
+  	case -1:			/* fork failed */
+  	    (void) unlink (tmp);
+  	    error (1, errno, "fork failed during checkout of %s",
+  		   vers->srcfile->path);
+  	default:
+  	    break;
+      }
+      (void) unlink (tmp);
+      return (0);
+  }
+--- 386,410 ----
+      run_setup ("%s%s -p -q %s -r%s", Rcsbin, RCS_CO,
+  	       *options ? options : vers->options, use_rev1);
+      run_arg (vers->srcfile->path);
+!     switch (run_exec (RUN_TTY, tmp = tempnam ("", TMPPREFIX), RUN_TTY, RUN_REALLY))
+      {
+  	case 0:				/* everything ok */
+  	    if (xcmp (file, tmp) == 0)
+  	    {
+  		(void) unlink (tmp);
++ 		free (tmp);
+  		return (1);
+  	    }
+  	    break;
+  	case -1:			/* fork failed */
+  	    (void) unlink (tmp);
++ 	    free (tmp);
+  	    error (1, errno, "fork failed during checkout of %s",
+  		   vers->srcfile->path);
+  	default:
+  	    break;
+      }
+      (void) unlink (tmp);
++     free (tmp);
+      return (0);
+  }
+diff -cr cvs-1.3/src/entries.c DOS-OS2/src/entries.c
+*** cvs-1.3/src/entries.c	Fri Apr 02 16:24:52 1993
+--- DOS-OS2/src/entries.c	Mon Mar 22 16:26:46 1993
+***************
+*** 65,71 ****
+      List *list;
+  {
+      /* open the new one and walk the list writing entries */
+!     entfilename = CVSADM_ENTBAK;
+      entfile = open_file (entfilename, "w+");
+      (void) walklist (list, write_ent_proc);
+      if (fclose (entfile) == EOF)
+--- 65,74 ----
+      List *list;
+  {
+      /* open the new one and walk the list writing entries */
+!     if (short_names)
+! 	entfilename = CVSADM_ENTBAK_S;
+!     else
+! 	entfilename = CVSADM_ENTBAK;
+      entfile = open_file (entfilename, "w+");
+      (void) walklist (list, write_ent_proc);
+      if (fclose (entfile) == EOF)
+***************
+*** 281,293 ****
+  
+      if (dir != NULL)
+      {
+! 	(void) sprintf (entname, "%s/%s", dir, CVSADM_ENT);
+! 	(void) sprintf (entbak, "%s/%s", dir, CVSADM_ENTBAK);
+      }
+      else
+      {
+  	(void) strcpy (entname, CVSADM_ENT);
+! 	(void) strcpy (entbak, CVSADM_ENTBAK);
+      }
+  
+      fpin = open_file (entname, "r");
+--- 284,302 ----
+  
+      if (dir != NULL)
+      {
+! 	(void) sprintf (entname, "%s%c%s", dir, DIRSEP, CVSADM_ENT);
+! 	if (short_names)
+! 	    (void) sprintf (entbak, "%s%c%s", dir, DIRSEP, CVSADM_ENTBAK_S);
+! 	else
+! 	    (void) sprintf (entbak, "%s%c%s", dir, DIRSEP, CVSADM_ENTBAK);
+      }
+      else
+      {
+  	(void) strcpy (entname, CVSADM_ENT);
+! 	if (short_names)
+! 	    (void) strcpy (entbak, CVSADM_ENTBAK_S);
+! 	else
+! 	    (void) strcpy (entbak, CVSADM_ENTBAK);
+      }
+  
+      fpin = open_file (entname, "r");
+***************
+*** 335,348 ****
+  
+  	/* clean up any old Files or Mod files */
+  	if (dir != NULL)
+! 	    (void) sprintf (tmp, "%s/%s", dir, CVSADM_FILE);
+  	else
+  	    (void) strcpy (tmp, CVSADM_FILE);
+  	if (isfile (tmp))
+  	    (void) unlink (tmp);
+  
+  	if (dir != NULL)
+! 	    (void) sprintf (tmp, "%s/%s", dir, CVSADM_MOD);
+  	else
+  	    (void) strcpy (tmp, CVSADM_MOD);
+  	if (isfile (tmp))
+--- 344,357 ----
+  
+  	/* clean up any old Files or Mod files */
+  	if (dir != NULL)
+! 	    (void) sprintf (tmp, "%s%c%s", dir, DIRSEP, CVSADM_FILE);
+  	else
+  	    (void) strcpy (tmp, CVSADM_FILE);
+  	if (isfile (tmp))
+  	    (void) unlink (tmp);
+  
+  	if (dir != NULL)
+! 	    (void) sprintf (tmp, "%s%c%s", dir, DIRSEP, CVSADM_MOD);
+  	else
+  	    (void) strcpy (tmp, CVSADM_MOD);
+  	if (isfile (tmp))
+***************
+*** 394,401 ****
+      p->delproc = Entries_delproc;
+  
+      /* this one gets a key of the name for hashing */
+      p->key = xstrdup (name);
+! 
+      /* malloc the data parts and fill them in */
+      p->data = xmalloc (sizeof (Entnode));
+      entdata = (Entnode *) p->data;
+--- 403,417 ----
+      p->delproc = Entries_delproc;
+  
+      /* this one gets a key of the name for hashing */
++ /*
++ #if defined(OS2) || defined(DOS)
++     p->key = strlwr (xstrdup (name));
++ #else
++ */
+      p->key = xstrdup (name);
+! /*
+! #endif
+! */
+      /* malloc the data parts and fill them in */
+      p->data = xmalloc (sizeof (Entnode));
+      entdata = (Entnode *) p->data;
+***************
+*** 433,439 ****
+      if (dir == NULL)
+  	(void) strcpy (tmp, CVSADM_TAG);
+      else
+! 	(void) sprintf (tmp, "%s/%s", dir, CVSADM_TAG);
+  
+      if (tag || date)
+      {
+--- 449,455 ----
+      if (dir == NULL)
+  	(void) strcpy (tmp, CVSADM_TAG);
+      else
+! 	(void) sprintf (tmp, "%s%c%s", dir, DIRSEP, CVSADM_TAG);
+  
+      if (tag || date)
+      {
+diff -cr cvs-1.3/src/find_nam.c DOS-OS2/src/find_nam.c
+*** cvs-1.3/src/find_nam.c	Fri Apr 02 16:24:52 1993
+--- DOS-OS2/src/find_nam.c	Sun Jun 13 12:04:04 1993
+***************
+*** 4,17 ****
+   * 
+   * You may distribute under the terms of the GNU General Public License as
+   * specified in the README file that comes with the CVS 1.3 kit.
+!  * 
+   * Find Names
+   * 
+   * Finds all the pertinent file names, both from the administration and from the
+   * repository
+   * 
+   * Find Dirs
+!  * 
+   * Finds all pertinent sub-directories of the checked out instantiation and the
+   * repository (and optionally the attic)
+   */
+--- 4,17 ----
+   * 
+   * You may distribute under the terms of the GNU General Public License as
+   * specified in the README file that comes with the CVS 1.3 kit.
+!  *
+   * Find Names
+   * 
+   * Finds all the pertinent file names, both from the administration and from the
+   * repository
+   * 
+   * Find Dirs
+!  *
+   * Finds all pertinent sub-directories of the checked out instantiation and the
+   * repository (and optionally the attic)
+   */
+***************
+*** 92,98 ****
+  	}
+      }
+  
+!     if ((which & W_REPOS) && repository && !isreadable (CVSADM_ENTSTAT))
+      {
+  	/* search the repository */
+  	if (find_rcs (repository, files) != 0)
+--- 92,98 ----
+  	}
+      }
+  
+!     if ((which & W_REPOS) && repository && !isreadable (short_names ? CVSADM_ENTSTAT_S : CVSADM_ENTSTAT))
+      {
+  	/* search the repository */
+  	if (find_rcs (repository, files) != 0)
+***************
+*** 101,107 ****
+  	/* search the attic too */
+  	if (which & W_ATTIC)
+  	{
+! 	    (void) sprintf (dir, "%s/%s", repository, CVSATTIC);
+  	    (void) find_rcs (dir, files);
+  	}
+      }
+--- 101,107 ----
+  	/* search the attic too */
+  	if (which & W_ATTIC)
+  	{
+! 	    (void) sprintf (dir, "%s%c%s", repository, DIRSEP, CVSATTIC);
+  	    (void) find_rcs (dir, files);
+  	}
+      }
+***************
+*** 145,151 ****
+  	{
+  	    char dir[PATH_MAX];
+  
+! 	    (void) sprintf (dir, "%s/%s", repository, CVSATTIC);
+  	    (void) find_dirs (dir, dirlist, 0);
+  	}
+  #endif
+--- 145,151 ----
+  	{
+  	    char dir[PATH_MAX];
+  
+! 	    (void) sprintf (dir, "%s%c%s", repository, DIRSEP, CVSATTIC);
+  	    (void) find_dirs (dir, dirlist, 0);
+  	}
+  #endif
+***************
+*** 167,195 ****
+      List *list;
+  {
+      Node *p;
+-     CONST char *regex_err;
+-     char line[50];
+      struct direct *dp;
+      DIR *dirp;
+  
+      /* set up to read the dir */
+      if ((dirp = opendir (dir)) == NULL)
+  	return (1);
+  
+      /* set up a regular expression to find the ,v files */
+!     (void) sprintf (line, ".*%s$", RCSEXT);
+!     if ((regex_err = re_comp (line)) != NULL)
+! 	error (1, 0, "%s", regex_err);
+  
+      /* read the dir, grabbing the ,v files */
+      while ((dp = readdir (dirp)) != NULL)
+      {
+! 	if (re_exec (dp->d_name))
+  	{
+  	    char *comma;
+  
+! 	    comma = rindex (dp->d_name, ',');	/* strip the ,v */
+! 	    *comma = '\0';
+  	    p = getnode ();
+  	    p->type = FILES;
+  	    p->key = xstrdup (dp->d_name);
+--- 167,202 ----
+      List *list;
+  {
+      Node *p;
+      struct direct *dp;
+      DIR *dirp;
++     char tmp[PATH_MAX];
++     char line[50];
++     CONST char *regex_err;
+  
+      /* set up to read the dir */
+      if ((dirp = opendir (dir)) == NULL)
+  	return (1);
+  
+      /* set up a regular expression to find the ,v files */
+!     if (!short_names) {
+! 	(void) sprintf (line, ".*%s$", RCSEXT);
+! 	if ((regex_err = re_comp (line)) != NULL)
+! 	    error (1, 0, "%s", regex_err);
+!     }
+  
+      /* read the dir, grabbing the ,v files */
+      while ((dp = readdir (dirp)) != NULL)
+      {
+! 	if (short_names)
+! 	    (void) sprintf (tmp, "%s%c%s", dir, DIRSEP, dp->d_name);
+! 	if (short_names ? !isdir (tmp) : re_exec (dp->d_name))
+  	{
+  	    char *comma;
+  
+! 	    if (!short_names) {
+! 		comma = rindex (dp->d_name, ',');	/* strip the ,v */
+! 		*comma = '\0';
+! 	    }
+  	    p = getnode ();
+  	    p->type = FILES;
+  	    p->key = xstrdup (dp->d_name);
+***************
+*** 213,228 ****
+      int checkadm;
+  {
+      Node *p;
+-     CONST char *regex_err;
+      char tmp[PATH_MAX];
+      char admdir[PATH_MAX];
+      struct direct *dp;
+      DIR *dirp;
+  
+      /* build a regex to blow off ,v files */
+!     (void) sprintf (tmp, ".*%s$", RCSEXT);
+!     if ((regex_err = re_comp (tmp)) != NULL)
+! 	error (1, 0, "%s", regex_err);
+  
+      /* set up to read the dir */
+      if ((dirp = opendir (dir)) == NULL)
+--- 220,237 ----
+      int checkadm;
+  {
+      Node *p;
+      char tmp[PATH_MAX];
+      char admdir[PATH_MAX];
+      struct direct *dp;
+      DIR *dirp;
++     CONST char *regex_err;
+  
+      /* build a regex to blow off ,v files */
+!     if (!short_names) {
+! 	(void) sprintf (tmp, ".*%s$", RCSEXT);
+! 	if ((regex_err = re_comp (tmp)) != NULL)
+! 	    error (1, 0, "%s", regex_err);
+!     }
+  
+      /* set up to read the dir */
+      if ((dirp = opendir (dir)) == NULL)
+***************
+*** 234,244 ****
+  	if (strcmp (dp->d_name, ".") == 0 ||
+  	    strcmp (dp->d_name, "..") == 0 ||
+  	    strcmp (dp->d_name, CVSATTIC) == 0 ||
+! 	    strcmp (dp->d_name, CVSLCK) == 0 ||
+! 	    re_exec (dp->d_name))	/* don't bother stating ,v files */
+  	    continue;
+  
+! 	(void) sprintf (tmp, "%s/%s", dir, dp->d_name);
+  	if (isdir (tmp))
+  	{
+  	    /* check for administration directories (if needed) */
+--- 243,254 ----
+  	if (strcmp (dp->d_name, ".") == 0 ||
+  	    strcmp (dp->d_name, "..") == 0 ||
+  	    strcmp (dp->d_name, CVSATTIC) == 0 ||
+!         (short_names ? strcmp (dp->d_name, CVSLCK_S) == 0 :
+!                        strcmp (dp->d_name, CVSLCK) == 0 ) ||
+! 	    (short_names ? 0 : re_exec (dp->d_name))) /* don't bother stating ,v files */
+  	    continue;
+  
+! 	(void) sprintf (tmp, "%s%c%s", dir, DIRSEP, dp->d_name);
+  	if (isdir (tmp))
+  	{
+  	    /* check for administration directories (if needed) */
+***************
+*** 249,259 ****
+  		    continue;
+  
+  		/* check for new style */
+! 		(void) sprintf (admdir, "%s/%s", tmp, CVSADM);
+  		if (!isdir (admdir))
+  		{
+  		    /* and old style */
+! 		    (void) sprintf (admdir, "%s/%s", tmp, OCVSADM);
+  		    if (!isdir (admdir))
+  			continue;
+  		}
+--- 259,269 ----
+  		    continue;
+  
+  		/* check for new style */
+! 		(void) sprintf (admdir, "%s%c%s", tmp, DIRSEP, CVSADM);
+  		if (!isdir (admdir))
+  		{
+  		    /* and old style */
+! 		    (void) sprintf (admdir, "%s%c%s", tmp, DIRSEP, OCVSADM);
+  		    if (!isdir (admdir))
+  			continue;
+  		}
+diff -cr cvs-1.3/src/history.c DOS-OS2/src/history.c
+*** cvs-1.3/src/history.c	Fri Apr 02 16:24:54 1993
+--- DOS-OS2/src/history.c	Mon Mar 22 16:26:46 1993
+***************
+*** 354,364 ****
+       * By default, sort by date, time
+       * XXX: This fails after 2030 when date slides into sign bit
+       */
+-     if ((i = ((long) (left->date) - (long) (right->date))) != 0)
+- 	return (i);
+  
+      /* For matching dates, keep the sort stable by using record index */
+!     return (left->idx - right->idx);
+  }
+  
+  static time_t
+--- 354,363 ----
+       * By default, sort by date, time
+       * XXX: This fails after 2030 when date slides into sign bit
+       */
+  
+      /* For matching dates, keep the sort stable by using record index */
+!     return (left->date > right->date ?  1 :
+! 	    left->date < right->date ? -1 : left->idx - right->idx);
+  }
+  
+  static time_t
+***************
+*** 570,577 ****
+      if (histfile)
+  	(void) strcpy (fname, histfile);
+      else
+! 	(void) sprintf (fname, "%s/%s/%s", CVSroot,
+! 			CVSROOTADM, CVSROOTADM_HISTORY);
+  
+      read_hrecs (fname);
+      qsort ((PTR) hrec_head, hrec_count, sizeof (struct hrec), sort_order);
+--- 569,576 ----
+      if (histfile)
+  	(void) strcpy (fname, histfile);
+      else
+! 	(void) sprintf (fname, "%s%c%s%c%s", CVSroot, DIRSEP,
+! 			CVSROOTADM, DIRSEP, CVSROOTADM_HISTORY);
+  
+      read_hrecs (fname);
+      qsort ((PTR) hrec_head, hrec_count, sizeof (struct hrec), sort_order);
+***************
+*** 598,604 ****
+  
+      if (logoff)			/* History is turned off by cmd line switch */
+  	return;
+!     (void) sprintf (fname, "%s/%s/%s", CVSroot, CVSROOTADM, CVSROOTADM_HISTORY);
+  
+      /* turn off history logging if the history file does not exist */
+      if (!isfile (fname))
+--- 597,604 ----
+  
+      if (logoff)			/* History is turned off by cmd line switch */
+  	return;
+!     (void) sprintf (fname, "%s%c%s%c%s", CVSroot, DIRSEP,
+! 		    CVSROOTADM, DIRSEP, CVSROOTADM_HISTORY);
+  
+      /* turn off history logging if the history file does not exist */
+      if (!isfile (fname))
+***************
+*** 614,623 ****
+  
+      if (!PrCurDir)
+      {
+! 	struct passwd *pw;
+  
+  	(void) strcpy (username, getcaller ());
+  	PrCurDir = CurDir;
+  	if (!(pw = (struct passwd *) getpwnam (username)))
+  	    error (0, 0, "cannot find own username");
+  	else
+--- 614,626 ----
+  
+      if (!PrCurDir)
+      {
+! #if !defined(OS2) && !defined(DOS)
+!     struct passwd *pw;
+! #endif
+  
+  	(void) strcpy (username, getcaller ());
+  	PrCurDir = CurDir;
++ #if !defined(OS2) && !defined(DOS)
+  	if (!(pw = (struct passwd *) getpwnam (username)))
+  	    error (0, 0, "cannot find own username");
+  	else
+***************
+*** 648,653 ****
+--- 651,657 ----
+  		}
+  	    }
+  	}
++ #endif
+      }
+  
+      if (type == 'T')
+***************
+*** 656,662 ****
+  	update_dir = "";
+      }
+      else if (update_dir && *update_dir)
+! 	slash = "/";
+      else
+  	update_dir = "";
+  
+--- 660,666 ----
+  	update_dir = "";
+      }
+      else if (update_dir && *update_dir)
+! 	slash = DIRSEPSTR;
+      else
+  	update_dir = "";
+  
+***************
+*** 716,722 ****
+--- 720,730 ----
+  	(void) sprintf ((cp + 1), "*%x", i);
+      }
+  
++ #ifdef DOS
++     if (fprintf (fp, "%c%08lx|%s|%s|%s|%s|%s\n", type, time ((time_t *) NULL),
++ #else
+      if (fprintf (fp, "%c%08x|%s|%s|%s|%s|%s\n", type, time ((time_t *) NULL),
++ #endif
+  		 username, workdir, repos, revs ? revs : "", name) == EOF)
+  	error (1, errno, "cannot write to history file: %s", fname);
+      (void) fclose (fp);
+***************
+*** 775,781 ****
+  	if (name && *name)
+  	{
+  	    (void) strcpy (cp, dir);
+! 	    (void) strcat (cp, "/");
+  	    (void) strcat (cp, name);
+  	}
+  	else
+--- 783,789 ----
+  	if (name && *name)
+  	{
+  	    (void) strcpy (cp, dir);
+! 	    (void) strcat (cp, DIRSEPSTR);
+  	    (void) strcat (cp, name);
+  	}
+  	else
+***************
+*** 845,851 ****
+--- 853,863 ----
+      *rtn++ = '\0';
+  
+      hr->type = line++;
++ #ifdef DOS
++     (void) sscanf (line, "%lx", &hr->date);
++ #else
+      (void) sscanf (line, "%x", &hr->date);
++ #endif
+      while (*line && index ("0123456789abcdefABCDEF", *line))
+  	line++;
+      if (*line == '\0')
+***************
+*** 903,909 ****
+      histdata = cp = xmalloc (i + 2);
+      histsize = i;
+  
+!     if (read (fd, cp, i) != i)
+  	error (1, errno, "cannot read log file");
+      (void) close (fd);
+  
+--- 915,921 ----
+      histdata = cp = xmalloc (i + 2);
+      histsize = i;
+  
+!     if ((i = read (fd, cp, i)) < 0)
+  	error (1, errno, "cannot read log file");
+      (void) close (fd);
+  
+***************
+*** 1132,1141 ****
+  		}
+  		else
+  		{
+! 		    if (index (cp, '/'))
+  		    {
+! 			(void) sprintf (cp2 = cmpfile, "%s/%s",
+! 					hr->repos, hr->file);
+  		    }
+  		    else
+  		    {
+--- 1144,1153 ----
+  		}
+  		else
+  		{
+! 		    if (index (cp, DIRSEP))
+  		    {
+! 			(void) sprintf (cp2 = cmpfile, "%s%c%s",
+! 					hr->repos, DIRSEP, hr->file);
+  		    }
+  		    else
+  		    {
+***************
+*** 1258,1264 ****
+  		  tm->tm_mday, tm->tm_hour, tm->tm_min, user_len, lr->user);
+  
+  	(void) sprintf (workdir, "%s%s", lr->dir, lr->end);
+! 	if ((cp = rindex (workdir, '/')) != NULL)
+  	{
+  	    if (lr->mod && !strcmp (++cp, lr->mod))
+  	    {
+--- 1270,1276 ----
+  		  tm->tm_mday, tm->tm_hour, tm->tm_min, user_len, lr->user);
+  
+  	(void) sprintf (workdir, "%s%s", lr->dir, lr->end);
+! 	if ((cp = rindex (workdir, DIRSEP)) != NULL)
+  	{
+  	    if (lr->mod && !strcmp (++cp, lr->mod))
+  	    {
+***************
+*** 1266,1272 ****
+  	    }
+  	}
+  	(void) strcpy (repos, lr->repos);
+! 	if ((cp = rindex (repos, '/')) != NULL)
+  	{
+  	    if (lr->mod && !strcmp (++cp, lr->mod))
+  	    {
+--- 1278,1284 ----
+  	    }
+  	}
+  	(void) strcpy (repos, lr->repos);
+! 	if ((cp = rindex (repos, DIRSEP)) != NULL)
+  	{
+  	    if (lr->mod && !strcmp (++cp, lr->mod))
+  	    {
+diff -cr cvs-1.3/src/ignore.c DOS-OS2/src/ignore.c
+*** cvs-1.3/src/ignore.c	Fri Apr 02 16:24:54 1993
+--- DOS-OS2/src/ignore.c	Tue Mar 23 13:10:28 1993
+***************
+*** 41,47 ****
+--- 41,49 ----
+  ign_setup ()
+  {
+      extern char *getenv ();
++ #ifndef DOS
+      struct passwd *pw;
++ #endif
+      char file[PATH_MAX];
+      char *tmp;
+  
+***************
+*** 51,67 ****
+      free (tmp);
+  
+      /* Then add entries found in repository, if it exists */
+!     (void) sprintf (file, "%s/%s/%s", CVSroot, CVSROOTADM, CVSROOTADM_IGNORE);
+      if (isfile (file))
+  	ign_add_file (file, 0);
+  
+      /* Then add entries found in home dir, (if user has one) and file exists */
+      if ((pw = (struct passwd *) getpwuid (getuid ())) && pw->pw_dir)
+      {
+! 	(void) sprintf (file, "%s/%s", pw->pw_dir, CVSDOTIGNORE);
+  	if (isfile (file))
+  	    ign_add_file (file, 0);
+      }
+  
+      /* Then add entries found in CVSIGNORE environment variable. */
+      ign_add (getenv (IGNORE_ENV), 0);
+--- 53,72 ----
+      free (tmp);
+  
+      /* Then add entries found in repository, if it exists */
+!     (void) sprintf (file, "%s%c%s%c%s", CVSroot, DIRSEP, CVSROOTADM, 
+!                     DIRSEP, short_names ? CVSROOTADM_IGNORE_S : CVSROOTADM_IGNORE);
+      if (isfile (file))
+  	ign_add_file (file, 0);
+  
+      /* Then add entries found in home dir, (if user has one) and file exists */
++ #ifndef DOS
+      if ((pw = (struct passwd *) getpwuid (getuid ())) && pw->pw_dir)
+      {
+! 	(void) sprintf (file, "%s%c%s", pw->pw_dir, DIRSEP, CVSDOTIGNORE);
+  	if (isfile (file))
+  	    ign_add_file (file, 0);
+      }
++ #endif
+  
+      /* Then add entries found in CVSIGNORE environment variable. */
+      ign_add (getenv (IGNORE_ENV), 0);
+diff -cr cvs-1.3/src/import.c DOS-OS2/src/import.c
+*** cvs-1.3/src/import.c	Fri Apr 02 16:24:54 1993
+--- DOS-OS2/src/import.c	Wed Jun 09 13:17:02 1993
+***************
+*** 22,28 ****
+  static char rcsid[] = "@(#)import.c 1.52 92/03/31";
+  #endif
+  
+! #define	FILE_HOLDER	".#cvsxxx"
+  
+  #if __STDC__
+  static char *get_comment (char *user);
+--- 22,28 ----
+  static char rcsid[] = "@(#)import.c 1.52 92/03/31";
+  #endif
+  
+! #define	FILE_HOLDER	"#cvsxxx"
+  
+  #if __STDC__
+  static char *get_comment (char *user);
+***************
+*** 78,84 ****
+      char *argv[];
+  {
+      char message[MAXMESGLEN];
+!     char tmpfile[L_tmpnam+1];
+      char *cp;
+      int i, c, msglen, err;
+      List *ulist;
+--- 78,84 ----
+      char *argv[];
+  {
+      char message[MAXMESGLEN];
+!     char *tmpfile;
+      char *cp;
+      int i, c, msglen, err;
+      List *ulist;
+***************
+*** 146,152 ****
+  	    error (1, 0, "Set it or specify the '-d' option to %s.",
+  		   program_name);
+  	}
+! 	(void) sprintf (repository, "%s/%s", CVSroot, argv[0]);
+  	repos_len = strlen (CVSroot);
+      }
+      else
+--- 146,155 ----
+  	    error (1, 0, "Set it or specify the '-d' option to %s.",
+  		   program_name);
+  	}
+! 	if (short_names)
+! 	    (void) sprintf (repository, "%s%c%s%cRCS", CVSroot, DIRSEP, argv[0], DIRSEP);
+! 	else
+! 	    (void) sprintf (repository, "%s%c%s", CVSroot, DIRSEP, argv[0]);
+  	repos_len = strlen (CVSroot);
+      }
+      else
+***************
+*** 186,194 ****
+      make_directories (repository);
+  
+      /* Create the logfile that will be logged upon completion */
+!     if ((logfp = fopen (tmpnam (tmpfile), "w+")) == NULL)
+  	error (1, errno, "cannot create temporary file `%s'", tmpfile);
+      (void) unlink (tmpfile);		/* to be sure it goes away */
+      (void) fprintf (logfp, "\nVendor Tag:\t%s\n", argv[1]);
+      (void) fprintf (logfp, "Release Tags:\t");
+      for (i = 2; i < argc; i++)
+--- 189,204 ----
+      make_directories (repository);
+  
+      /* Create the logfile that will be logged upon completion */
+!     if ((logfp = fopen (tmpfile = tempnam ("", TMPPREFIX), "w+")) == NULL)
+  	error (1, errno, "cannot create temporary file `%s'", tmpfile);
++ #if !defined(OS2) && !defined(DOS)
++ /*
++  * gcc/emx unlink () doesn't unlink after closing
++  *
++  */
+      (void) unlink (tmpfile);		/* to be sure it goes away */
++     free (tmpfile);
++ #endif
+      (void) fprintf (logfp, "\nVendor Tag:\t%s\n", argv[1]);
+      (void) fprintf (logfp, "Release Tags:\t");
+      for (i = 2; i < argc; i++)
+***************
+*** 235,240 ****
+--- 245,254 ----
+      Update_Logfile (repository, message, vbranch, logfp, ulist);
+      dellist (&ulist);
+      (void) fclose (logfp);
++ #if defined(OS2) || defined(DOS)
++     (void) unlink (tmpfile);
++     free (tmpfile);
++ #endif
+      return (err);
+  }
+  
+***************
+*** 324,334 ****
+      char attic_name[PATH_MAX];
+      char rcs[PATH_MAX];
+  
+!     (void) sprintf (rcs, "%s/%s%s", repository, vfile, RCSEXT);
+      if (!isfile (rcs))
+      {
+! 	(void) sprintf (attic_name, "%s/%s/%s%s", repository, CVSATTIC,
+! 			vfile, RCSEXT);
+  	if (!isfile (attic_name))
+  	{
+  
+--- 338,349 ----
+      char attic_name[PATH_MAX];
+      char rcs[PATH_MAX];
+  
+!     (void) sprintf (rcs, "%s%c%s%s", repository, DIRSEP, vfile, short_names ? RCSEXT_S : RCSEXT);
+      if (!isfile (rcs))
+      {
+! 	(void) sprintf (attic_name, "%s%c%s%c%s%s", repository, DIRSEP,
+! 			CVSATTIC, DIRSEP,
+! 			vfile, short_names ? RCSEXT_S : RCSEXT);
+  	if (!isfile (attic_name))
+  	{
+  
+***************
+*** 367,379 ****
+  		       1, 0, (List *) NULL, (List *) NULL);
+      if (vers->vn_rcs != NULL)
+      {
+- 	char xtmpfile[50];
+  	int different;
+  	int retcode = 0;
+  
+- 	/* XXX - should be more unique */
+- 	(void) sprintf (xtmpfile, "/tmp/%s", FILE_HOLDER);
+- 
+  	/*
+  	 * The rcs file does have a revision on the vendor branch. Compare
+  	 * this revision with the import file; if they match exactly, there
+--- 382,390 ----
+***************
+*** 389,395 ****
+  	run_setup ("%s%s -q -f -r%s -p", Rcsbin, RCS_CO, vers->vn_rcs);
+  #endif
+  	run_arg (vers->srcfile->path);
+! 	if ((retcode = run_exec (RUN_TTY, xtmpfile, RUN_TTY,
+  				 RUN_NORMAL|RUN_REALLY)) != 0)
+  	{
+  	    ierrno = errno;
+--- 400,406 ----
+  	run_setup ("%s%s -q -f -r%s -p", Rcsbin, RCS_CO, vers->vn_rcs);
+  #endif
+  	run_arg (vers->srcfile->path);
+! 	if ((retcode = run_exec (RUN_TTY, FILE_HOLDER, RUN_TTY,
+  				 RUN_NORMAL|RUN_REALLY)) != 0)
+  	{
+  	    ierrno = errno;
+***************
+*** 399,409 ****
+  	    error (0, retcode == -1 ? ierrno : 0,
+  		   "ERROR: cannot co revision %s of file %s", vers->vn_rcs,
+  		   vers->srcfile->path);
+! 	    (void) unlink_file (xtmpfile);
+  	    return (1);
+  	}
+! 	different = xcmp (xtmpfile, vfile);
+! 	(void) unlink_file (xtmpfile);
+  	if (!different)
+  	{
+  	    int retval = 0;
+--- 410,420 ----
+  	    error (0, retcode == -1 ? ierrno : 0,
+  		   "ERROR: cannot co revision %s of file %s", vers->vn_rcs,
+  		   vers->srcfile->path);
+! 	    (void) unlink_file (FILE_HOLDER);
+  	    return (1);
+  	}
+! 	different = xcmp (FILE_HOLDER, vfile);
+! 	(void) unlink_file (FILE_HOLDER);
+  	if (!different)
+  	{
+  	    int retval = 0;
+***************
+*** 473,478 ****
+--- 484,499 ----
+  	    return (1);
+  	}
+      }
++ /*
++  * This appears to make a link to vfile in order for ci
++  * not to remove vfile and maintain file stamp/permissions.
++  * This doesn't work on systems that do not have symbolic
++  * links. On those systems one needs to copy vfile and
++  * set the copy's attributes to match those of vfile
++  */
++ #ifdef LINK_MISSING
++     copy_file (vfile, FILE_HOLDER);
++ #else /* not LINK_MISSING */
+      if (link_file (vfile, FILE_HOLDER) < 0)
+      {
+  	if (errno == EEXIST)
+***************
+*** 488,493 ****
+--- 509,515 ----
+  	    return (1);
+  	}
+      }
++ #endif /* LINK_MISSING */
+      run_setup ("%s%s -q -f -r%s", Rcsbin, RCS_CI, vbranch);
+      run_args ("-m%s", message);
+      run_arg (rcs);
+***************
+*** 709,715 ****
+--- 731,742 ----
+      if (noexec)
+  	return (0);
+  
++ #if defined(OS2) || defined(DOS)
++ /* RCS seems to keep its files in \n format */
++     fprcs = open_file (rcs, "w+b");
++ #else
+      fprcs = open_file (rcs, "w+");
++ #endif
+      fpuser = open_file (user, "r");
+  
+      /*
+***************
+*** 790,804 ****
+  	error (1, errno, "cannot fstat %s", user);
+      if (sb.st_size > 0)
+      {
+! 	off_t size;
+  
+- 	size = sb.st_size;
+  	buf = xmalloc ((int) size);
+! 	if (fread (buf, (int) size, 1, fpuser) != 1)
+  	    error (1, errno, "cannot read file %s for copying", user);
+! 	if (expand_at_signs (buf, size, fprcs) == EOF)
+  	    goto write_error;
+  	free (buf);
+      }
+      if (fprintf (fprcs, "@\n\n") == EOF ||
+  	fprintf (fprcs, "\n%s.1\n", vbranch) == EOF ||
+--- 817,849 ----
+  	error (1, errno, "cannot fstat %s", user);
+      if (sb.st_size > 0)
+      {
+! #if defined(DOS)
+!     /* DOS cant't handle reads with large file sizes */
+! 	off_t count;
+! 
+! 	buf = xmalloc (1024);
+! 	while( (count=read(fileno (fpuser), buf, 1024)) > 0) {
+! 	    if (expand_at_signs (buf, count, fprcs) == EOF) {
+! 		free (buf);
+! 		goto write_error;
+! 	    }
+! 	}
+! 	if (count == -1)
+! 	    error (1, errno, "cannot read file %s for copying", user);
+! 	free (buf);
+! #else  /* not DOS */
+! 	off_t size = sb.st_size;
+  
+  	buf = xmalloc ((int) size);
+! 	size = fread (buf, 1, (int) size, fpuser);
+!         if (ferror (fpuser))
+  	    error (1, errno, "cannot read file %s for copying", user);
+! 	if (expand_at_signs (buf, size, fprcs) == EOF) {
+! 	    free (buf);
+  	    goto write_error;
++ 	}
+  	free (buf);
++ #endif  /* DOS */
+      }
+      if (fprintf (fprcs, "@\n\n") == EOF ||
+  	fprintf (fprcs, "\n%s.1\n", vbranch) == EOF ||
+***************
+*** 880,897 ****
+      if (!really_quiet)			/* write to terminal */
+      {
+  	if (repos_len)
+! 	    (void) printf ("%c %s/%s\n", ch, repository + repos_len + 1, fname);
+  	else if (repository[0])
+! 	    (void) printf ("%c %s/%s\n", ch, repository, fname);
+  	else
+  	    (void) printf ("%c %s\n", ch, fname);
+      }
+  
+      if (repos_len)			/* write to logfile */
+! 	(void) fprintf (logfp, "%c %s/%s\n", ch,
+! 			repository + repos_len + 1, fname);
+      else if (repository[0])
+! 	(void) fprintf (logfp, "%c %s/%s\n", ch, repository, fname);
+      else
+  	(void) fprintf (logfp, "%c %s\n", ch, fname);
+  }
+--- 925,942 ----
+      if (!really_quiet)			/* write to terminal */
+      {
+  	if (repos_len)
+! 	    (void) printf ("%c %s%c%s\n", ch, repository + repos_len + 1, DIRSEP, fname);
+  	else if (repository[0])
+! 	    (void) printf ("%c %s%c%s\n", ch, repository, DIRSEP, fname);
+  	else
+  	    (void) printf ("%c %s\n", ch, fname);
+      }
+  
+      if (repos_len)			/* write to logfile */
+! 	(void) fprintf (logfp, "%c %s%c%s\n", ch,
+! 			repository + repos_len + 1, DIRSEP, fname);
+      else if (repository[0])
+! 	(void) fprintf (logfp, "%c %s%c%s\n", ch, repository, DIRSEP, fname);
+      else
+  	(void) fprintf (logfp, "%c %s\n", ch, fname);
+  }
+***************
+*** 927,933 ****
+  	(void) strcpy (repository, dir);
+      else
+      {
+! 	(void) strcat (repository, "/");
+  	(void) strcat (repository, dir);
+      }
+      if (!quiet)
+--- 972,978 ----
+  	(void) strcpy (repository, dir);
+      else
+      {
+! 	(void) strcat (repository, DIRSEPSTR);
+  	(void) strcat (repository, dir);
+      }
+      if (!quiet)
+***************
+*** 964,970 ****
+      }
+      err = import_descend (message, vtag, targc, targv);
+    out:
+!     if ((cp = rindex (repository, '/')) != NULL)
+  	*cp = '\0';
+      else
+  	repository[0] = '\0';
+--- 1009,1015 ----
+      }
+      err = import_descend (message, vtag, targc, targv);
+    out:
+!     if ((cp = rindex_sep(repository)) != NULL)
+  	*cp = '\0';
+      else
+  	repository[0] = '\0';
+diff -cr cvs-1.3/src/lock.c DOS-OS2/src/lock.c
+*** cvs-1.3/src/lock.c	Fri Apr 02 16:24:56 1993
+--- DOS-OS2/src/lock.c	Fri Jun 04 17:47:20 1993
+***************
+*** 12,17 ****
+--- 12,22 ----
+  
+  #include "cvs.h"
+  
++ #ifdef DOS
++ #undef const
++ #include <process.h>
++ #endif
++ 
+  #ifndef lint
+  static char rcsid[] = "@(#)lock.c 1.42 92/04/10";
+  #endif
+***************
+*** 93,105 ****
+  
+      if (readlock[0] != '\0')
+      {
+! 	(void) sprintf (tmp, "%s/%s", repository, readlock);
+  	(void) unlink (tmp);
+      }
+  
+      if (writelock[0] != '\0')
+      {
+! 	(void) sprintf (tmp, "%s/%s", repository, writelock);
+  	(void) unlink (tmp);
+      }
+  
+--- 98,110 ----
+  
+      if (readlock[0] != '\0')
+      {
+! 	(void) sprintf (tmp, "%s%c%s", repository, DIRSEP, readlock);
+  	(void) unlink (tmp);
+      }
+  
+      if (writelock[0] != '\0')
+      {
+! 	(void) sprintf (tmp, "%s%c%s", repository, DIRSEP, writelock);
+  	(void) unlink (tmp);
+      }
+  
+***************
+*** 108,116 ****
+       * lead to the limitation that one user ID should not be committing
+       * files into the same Repository directory at the same time. Oh well.
+       */
+!     (void) sprintf (tmp, "%s/%s", repository, CVSLCK);
+      if (stat (tmp, &sb) != -1 && sb.st_uid == geteuid () &&
+  	(writelock[0] != '\0' || (readlock[0] != '\0' && cleanup_lckdir)))
+      {
+  	(void) rmdir (tmp);
+      }
+--- 113,126 ----
+       * lead to the limitation that one user ID should not be committing
+       * files into the same Repository directory at the same time. Oh well.
+       */
+!     (void) sprintf (tmp, "%s%c%s", repository, DIRSEP, short_names ? CVSLCK_S : CVSLCK);
+! #ifdef DOS
+!     if (stat (tmp, &sb) != -1 &&
+! 	(writelock[0] != '\0' || (readlock[0] != '\0' && cleanup_lckdir)))
+! #else
+      if (stat (tmp, &sb) != -1 && sb.st_uid == geteuid () &&
+  	(writelock[0] != '\0' || (readlock[0] != '\0' && cleanup_lckdir)))
++ #endif
+      {
+  	(void) rmdir (tmp);
+      }
+***************
+*** 139,158 ****
+      }
+  
+      if (readlock[0] == '\0')
+! 	(void) sprintf (readlock, "%s.%d", CVSRFL, getpid ());
+  
+      /* remember what we're locking (for lock_cleanup) */
+      repository = xrepository;
+  
+      /* make sure we clean up on error */
+      (void) SIG_register (SIGHUP, Lock_Cleanup);
+-     (void) SIG_register (SIGINT, Lock_Cleanup);
+      (void) SIG_register (SIGQUIT, Lock_Cleanup);
+      (void) SIG_register (SIGPIPE, Lock_Cleanup);
+      (void) SIG_register (SIGTERM, Lock_Cleanup);
+  
+      /* make sure we can write the repository */
+!     (void) sprintf (tmp, "%s/%s.%d", xrepository, CVSTFL, getpid ());
+      if ((fp = fopen (tmp, "w+")) == NULL || fclose (fp) == EOF)
+      {
+  	error (0, errno, "cannot create read lock in repository `%s'",
+--- 149,176 ----
+      }
+  
+      if (readlock[0] == '\0')
+! 	if (short_names)
+! 	    (void) sprintf (readlock, "%d.%s", getpid (), CVSRFL_S);
+! 	else
+! 	    (void) sprintf (readlock, "%s.%d", CVSRFL, getpid ());
+  
+      /* remember what we're locking (for lock_cleanup) */
+      repository = xrepository;
+  
+      /* make sure we clean up on error */
++ #ifndef DOS
+      (void) SIG_register (SIGHUP, Lock_Cleanup);
+      (void) SIG_register (SIGQUIT, Lock_Cleanup);
+      (void) SIG_register (SIGPIPE, Lock_Cleanup);
++ #endif
++     (void) SIG_register (SIGINT, Lock_Cleanup);
+      (void) SIG_register (SIGTERM, Lock_Cleanup);
+  
+      /* make sure we can write the repository */
+!     if (short_names)
+! 	(void) sprintf (tmp, "%s%c%d.%s", xrepository, DIRSEP, getpid (), CVSTFL_S);
+!     else
+! 	(void) sprintf (tmp, "%s%c%s.%d", xrepository, DIRSEP, CVSTFL, getpid ());
+      if ((fp = fopen (tmp, "w+")) == NULL || fclose (fp) == EOF)
+      {
+  	error (0, errno, "cannot create read lock in repository `%s'",
+***************
+*** 164,170 ****
+      (void) unlink (tmp);
+  
+      /* get the lock dir for our own */
+!     (void) sprintf (tmp, "%s/%s", xrepository, CVSLCK);
+      if (set_lock (tmp, 1, xrepository) != L_OK)
+      {
+  	error (0, 0, "failed to obtain dir lock in repository `%s'",
+--- 182,188 ----
+      (void) unlink (tmp);
+  
+      /* get the lock dir for our own */
+!     (void) sprintf (tmp, "%s%c%s", xrepository, DIRSEP, short_names ? CVSLCK_S : CVSLCK);
+      if (set_lock (tmp, 1, xrepository) != L_OK)
+      {
+  	error (0, 0, "failed to obtain dir lock in repository `%s'",
+***************
+*** 174,180 ****
+      }
+  
+      /* write a read-lock */
+!     (void) sprintf (tmp, "%s/%s", xrepository, readlock);
+      if ((fp = fopen (tmp, "w+")) == NULL || fclose (fp) == EOF)
+      {
+  	error (0, errno, "cannot create read lock in repository `%s'",
+--- 192,198 ----
+      }
+  
+      /* write a read-lock */
+!     (void) sprintf (tmp, "%s%c%s", xrepository, DIRSEP, readlock);
+      if ((fp = fopen (tmp, "w+")) == NULL || fclose (fp) == EOF)
+      {
+  	error (0, errno, "cannot create read lock in repository `%s'",
+***************
+*** 184,190 ****
+      }
+  
+      /* free the lock dir */
+!     (void) sprintf (tmp, "%s/%s", xrepository, CVSLCK);
+      if (rmdir (tmp) < 0)
+  	error (0, errno, "failed to remove lock dir `%s'", tmp);
+  
+--- 202,208 ----
+      }
+  
+      /* free the lock dir */
+!     (void) sprintf (tmp, "%s%c%s", xrepository, DIRSEP, short_names ? CVSLCK_S : CVSLCK);
+      if (rmdir (tmp) < 0)
+  	error (0, errno, "failed to remove lock dir `%s'", tmp);
+  
+***************
+*** 273,289 ****
+      char tmp[PATH_MAX];
+  
+      if (writelock[0] == '\0')
+! 	(void) sprintf (writelock, "%s.%d", CVSWFL, getpid ());
+  
+      /* make sure we clean up on error */
+      (void) SIG_register (SIGHUP, Lock_Cleanup);
+-     (void) SIG_register (SIGINT, Lock_Cleanup);
+      (void) SIG_register (SIGQUIT, Lock_Cleanup);
+      (void) SIG_register (SIGPIPE, Lock_Cleanup);
+      (void) SIG_register (SIGTERM, Lock_Cleanup);
+  
+      /* make sure we can write the repository */
+!     (void) sprintf (tmp, "%s/%s.%d", repository, CVSTFL, getpid ());
+      if ((fp = fopen (tmp, "w+")) == NULL || fclose (fp) == EOF)
+      {
+  	error (0, errno, "cannot create write lock in repository `%s'",
+--- 291,315 ----
+      char tmp[PATH_MAX];
+  
+      if (writelock[0] == '\0')
+! 	if (short_names)
+! 	    (void) sprintf (writelock, "%d.%s", getpid (), CVSWFL_S);
+! 	else
+! 	    (void) sprintf (writelock, "%s.%d", CVSWFL, getpid ());
+  
+      /* make sure we clean up on error */
++ #ifndef DOS
+      (void) SIG_register (SIGHUP, Lock_Cleanup);
+      (void) SIG_register (SIGQUIT, Lock_Cleanup);
+      (void) SIG_register (SIGPIPE, Lock_Cleanup);
++ #endif
++     (void) SIG_register (SIGINT, Lock_Cleanup);
+      (void) SIG_register (SIGTERM, Lock_Cleanup);
+  
+      /* make sure we can write the repository */
+!     if (short_names)
+! 	(void) sprintf (tmp, "%s%c%d.%s", repository, DIRSEP, getpid (), CVSTFL_S);
+!     else
+! 	(void) sprintf (tmp, "%s%c%s.%d", repository, DIRSEP, CVSTFL, getpid ());
+      if ((fp = fopen (tmp, "w+")) == NULL || fclose (fp) == EOF)
+      {
+  	error (0, errno, "cannot create write lock in repository `%s'",
+***************
+*** 294,300 ****
+      (void) unlink (tmp);
+  
+      /* make sure the lock dir is ours (not necessarily unique to us!) */
+!     (void) sprintf (tmp, "%s/%s", repository, CVSLCK);
+      status = set_lock (tmp, 0, repository);
+      if (status == L_OK || status == L_LOCK_OWNED)
+      {
+--- 320,326 ----
+      (void) unlink (tmp);
+  
+      /* make sure the lock dir is ours (not necessarily unique to us!) */
+!     (void) sprintf (tmp, "%s%c%s", repository, DIRSEP, short_names ? CVSLCK_S : CVSLCK);
+      status = set_lock (tmp, 0, repository);
+      if (status == L_OK || status == L_LOCK_OWNED)
+      {
+***************
+*** 313,319 ****
+  	}
+  
+  	/* write the write-lock file */
+! 	(void) sprintf (tmp, "%s/%s", repository, writelock);
+  	if ((fp = fopen (tmp, "w+")) == NULL || fclose (fp) == EOF)
+  	{
+  	    int xerrno = errno;
+--- 339,345 ----
+  	}
+  
+  	/* write the write-lock file */
+! 	(void) sprintf (tmp, "%s%c%s", repository, DIRSEP, writelock);
+  	if ((fp = fopen (tmp, "w+")) == NULL || fclose (fp) == EOF)
+  	{
+  	    int xerrno = errno;
+***************
+*** 322,328 ****
+  	    /* free the lock dir if we created it */
+  	    if (status == L_OK)
+  	    {
+! 		(void) sprintf (tmp, "%s/%s", repository, CVSLCK);
+  		if (rmdir (tmp) < 0)
+  		    error (0, errno, "failed to remove lock dir `%s'", tmp);
+  	    }
+--- 348,354 ----
+  	    /* free the lock dir if we created it */
+  	    if (status == L_OK)
+  	    {
+!         (void) sprintf (tmp, "%s%c%s", repository, DIRSEP, short_names ? CVSLCK_S : CVSLCK);
+  		if (rmdir (tmp) < 0)
+  		    error (0, errno, "failed to remove lock dir `%s'", tmp);
+  	    }
+***************
+*** 367,373 ****
+  
+      while ((dp = readdir (dirp)) != NULL)
+      {
+! 	(void) sprintf (line, "%s/%s", repository, dp->d_name);
+  	if (re_exec (dp->d_name))
+  	{
+  #ifdef CVS_FUDGELOCKS
+--- 393,399 ----
+  
+      while ((dp = readdir (dirp)) != NULL)
+      {
+! 	(void) sprintf (line, "%s%c%s", repository, DIRSEP, dp->d_name);
+  	if (re_exec (dp->d_name))
+  	{
+  #ifdef CVS_FUDGELOCKS
+***************
+*** 409,414 ****
+--- 435,441 ----
+  set_lockers_name (statp)
+      struct stat *statp;
+  {
++ #ifndef DOS
+      struct passwd *pw;
+  
+      if ((pw = (struct passwd *) getpwuid (statp->st_uid)) !=
+***************
+*** 417,422 ****
+--- 444,450 ----
+  	(void) strcpy (lockers_name, pw->pw_name);
+      }
+      else
++ #endif
+  	(void) sprintf (lockers_name, "uid%d", statp->st_uid);
+  }
+  
+***************
+*** 478,484 ****
+--- 506,516 ----
+  	 * if we already own the lock, go ahead and return 1 which means it
+  	 * existed but we owned it
+  	 */
++ #ifdef DOS
++ 	if (!will_wait)
++ #else
+  	if (sb.st_uid == geteuid () && !will_wait)
++ #endif
+  	    return (L_LOCK_OWNED);
+  
+  #ifdef CVS_FUDGELOCKS
+diff -cr cvs-1.3/src/logmsg.c DOS-OS2/src/logmsg.c
+*** cvs-1.3/src/logmsg.c	Fri Apr 02 16:24:56 1993
+--- DOS-OS2/src/logmsg.c	Mon Mar 22 16:26:50 1993
+***************
+*** 138,144 ****
+      List *changes;
+  {
+      static int reuse_log_message = 0;
+!     char line[MAXLINELEN], fname[L_tmpnam+1];
+      char *orig_message;
+      struct stat pre_stbuf, post_stbuf;
+      int retcode = 0;
+--- 138,144 ----
+      List *changes;
+  {
+      static int reuse_log_message = 0;
+!     char line[MAXLINELEN], *fname;
+      char *orig_message;
+      struct stat pre_stbuf, post_stbuf;
+      int retcode = 0;
+***************
+*** 149,155 ****
+      orig_message = xstrdup (message);	/* save it for later */
+  
+      /* Create a temporary file */
+!     (void) tmpnam (fname);
+    again:
+      if ((fp = fopen (fname, "w+")) == NULL)
+  	error (1, 0, "cannot create temporary file %s", fname);
+--- 149,155 ----
+      orig_message = xstrdup (message);	/* save it for later */
+  
+      /* Create a temporary file */
+!     fname = tempnam ("", TMPPREFIX);
+    again:
+      if ((fp = fopen (fname, "w+")) == NULL)
+  	error (1, 0, "cannot create temporary file %s", fname);
+***************
+*** 243,248 ****
+--- 243,249 ----
+      }
+      free (orig_message);
+      (void) unlink_file (fname);
++     free (fname);
+  }
+  
+  /*
+diff -cr cvs-1.3/src/main.c DOS-OS2/src/main.c
+*** cvs-1.3/src/main.c	Fri Apr 02 16:24:56 1993
+--- DOS-OS2/src/main.c	Fri Jun 04 17:48:00 1993
+***************
+*** 32,37 ****
+--- 32,41 ----
+   *		history		Display history of Users and Modules.
+   */
+  
++ #ifdef __TURBOC__
++ extern unsigned _stklen = 0xF000;
++ #endif
++ 
+  #include "cvs.h"
+  #include "patchlevel.h"
+  
+***************
+*** 49,54 ****
+--- 53,63 ----
+  int trace = FALSE;
+  int noexec = FALSE;
+  int logoff = FALSE;
++ #if defined(DOS)
++ int short_names = TRUE;
++ #else
++ int short_names = FALSE;
++ #endif
+  
+  char *CurDir;
+  
+***************
+*** 130,135 ****
+--- 139,147 ----
+      "        -q           Cause CVS to be somewhat quiet.\n",
+      "        -r           Make checked-out files read-only\n",
+      "        -w           Make checked-out files read-write (default)\n",
++ #ifndef DOS
++     "        -s           Use short file names\n",
++ #endif
+      "        -l           Turn History logging off\n",
+      "        -n           Do not execute anything that will change the disk\n",
+      "        -t           Show trace of program execution -- Try with -n\n",
+***************
+*** 175,185 ****
+      int c, help = FALSE, err = 0;
+      int rcsbin_update_env, cvs_update_env;
+      char tmp[PATH_MAX];
+  
+      /*
+       * Just save the last component of the path for error messages
+       */
+!     if ((program_name = rindex (argv[0], '/')) == NULL)
+  	program_name = argv[0];
+      else
+  	program_name++;
+--- 187,206 ----
+      int c, help = FALSE, err = 0;
+      int rcsbin_update_env, cvs_update_env;
+      char tmp[PATH_MAX];
++ #   if TZ_must_be_set
++     static char const *TZ;
++     if (!TZ  &&  !(TZ = getenv("TZ")))
++ 	error (1, 0, "TZ must be set %s", TZ);
++ #   endif
+  
++ #ifdef OS2
++     _wildcard( &argc, &argv);
++ #endif
++ 
+      /*
+       * Just save the last component of the path for error messages
+       */
+!     if ((program_name = rindex_sep (argv[0])) == NULL)
+  	program_name = argv[0];
+      else
+  	program_name++;
+***************
+*** 188,193 ****
+--- 209,216 ----
+      if (!getwd (CurDir))
+  	error (1, 0, "cannot get working directory: %s", CurDir);
+  
++     if (ISDIRSEP (CurDir[strlen (CurDir) - 1]))
++ 	CurDir[strlen (CurDir) - 1] = 0;
+      /*
+       * Query the environment variables up-front, so that
+       * they can be overridden by command line arguments
+***************
+*** 209,218 ****
+--- 232,250 ----
+  	cvswrite = FALSE;
+  
+      optind = 1;
++ #ifdef DOS
+      while ((c = gnu_getopt (argc, argv, "Qqrwtnlvb:e:d:H")) != -1)
++ #else
++     while ((c = gnu_getopt (argc, argv, "sQqrwtnlvb:e:d:H")) != -1)
++ #endif
+      {
+  	switch (c)
+  	{
++ #ifndef DOS
++ 	    case 's':
++ 		short_names = TRUE;
++ 		break;
++ #endif
+  	    case 'Q':
+  		really_quiet = TRUE;
+  		/* FALL THROUGH */
+***************
+*** 265,270 ****
+--- 297,319 ----
+      if (argc < 1)
+  	usage (usg);
+  
++ #ifdef OS2
++     {
++         char drive[3];
++         char work_fsys[16];
++ 
++         drive[0] = _getdrive ();
++         drive[1] = ':';
++         drive[2] = 0;
++         if (_filesys (drive, work_fsys, sizeof (work_fsys)) != 0)
++             perror ("_filesys");
++         if (strcmp (work_fsys, "FAT") == 0)
++             short_names = TRUE;
++     }
++ 
++     if (!short_names)
++ 	putenv ("RCSINIT=-x,v/");
++ #endif
+      /*
+       * XXX - Compatibility.  This can be removed in the release after CVS 1.3.
+       * Try to rename the CVSROOT.adm file to CVSROOT, unless there already is
+***************
+*** 275,284 ****
+  	char rootadm[PATH_MAX];
+  	char orootadm[PATH_MAX];
+  
+! 	(void) sprintf (rootadm, "%s/%s", CVSroot, CVSROOTADM);
+  	if (!isdir (rootadm))
+  	{
+! 	    (void) sprintf (orootadm, "%s/%s", CVSroot, OCVSROOTADM);
+  	    if (isdir (orootadm))
+  		(void) rename (orootadm, rootadm);
+  	}
+--- 324,333 ----
+  	char rootadm[PATH_MAX];
+  	char orootadm[PATH_MAX];
+  
+! 	(void) sprintf (rootadm, "%s%c%s", CVSroot, DIRSEP, CVSROOTADM);
+  	if (!isdir (rootadm))
+  	{
+! 	    (void) sprintf (orootadm, "%s%c%s", CVSroot, DIRSEP, OCVSROOTADM);
+  	    if (isdir (orootadm))
+  		(void) rename (orootadm, rootadm);
+  	}
+***************
+*** 306,312 ****
+  	    if (!CVSroot || !*CVSroot)
+  		error (1, 0, "You don't have a %s environment variable",
+  		       CVSROOT_ENV);
+! 	    (void) sprintf (path, "%s/%s", CVSroot, CVSROOTADM);
+  	    if (access (path, R_OK | X_OK))
+  	    {
+  		save_errno = errno;
+--- 355,361 ----
+  	    if (!CVSroot || !*CVSroot)
+  		error (1, 0, "You don't have a %s environment variable",
+  		       CVSROOT_ENV);
+! 	    (void) sprintf (path, "%s%c%s", CVSroot, DIRSEP, CVSROOTADM);
+  	    if (access (path, R_OK | X_OK))
+  	    {
+  		save_errno = errno;
+***************
+*** 314,320 ****
+  		    "Sorry, you don't have sufficient access to %s", CVSroot);
+  		error (1, save_errno, "%s", path);
+  	    }
+! 	    (void) strcat (path, "/");
+  	    (void) strcat (path, CVSROOTADM_HISTORY);
+  	    if (isfile (path) && access (path, R_OK | W_OK))
+  	    {
+--- 363,369 ----
+  		    "Sorry, you don't have sufficient access to %s", CVSroot);
+  		error (1, save_errno, "%s", path);
+  	    }
+! 	    (void) strcat (path, DIRSEPSTR);
+  	    (void) strcat (path, CVSROOTADM_HISTORY);
+  	    if (isfile (path) && access (path, R_OK | W_OK))
+  	    {
+***************
+*** 357,368 ****
+  	int len = strlen (Rcsbin);
+  	char *rcsbin;
+  
+! 	if (Rcsbin[len - 1] != '/')
+  	{
+  	    rcsbin = Rcsbin;
+  	    Rcsbin = xmalloc (len + 2);	/* one for '/', one for NULL */
+  	    (void) strcpy (Rcsbin, rcsbin);
+! 	    (void) strcat (Rcsbin, "/");
+  	}
+      }
+  
+--- 406,417 ----
+  	int len = strlen (Rcsbin);
+  	char *rcsbin;
+  
+! 	if (Rcsbin[len - 1] != DIRSEP)
+  	{
+  	    rcsbin = Rcsbin;
+  	    Rcsbin = xmalloc (len + 2);	/* one for '/', one for NULL */
+  	    (void) strcpy (Rcsbin, rcsbin);
+! 	    (void) strcat (Rcsbin, DIRSEPSTR);
+  	}
+      }
+  
+***************
+*** 381,390 ****
+      else
+      {
+  	command_name = cm->fullname;	/* Global pointer for later use */
+  	(void) SIG_register (SIGHUP, main_cleanup);
+- 	(void) SIG_register (SIGINT, main_cleanup);
+  	(void) SIG_register (SIGQUIT, main_cleanup);
+  	(void) SIG_register (SIGPIPE, main_cleanup);
+  	(void) SIG_register (SIGTERM, main_cleanup);
+  
+  #ifndef SETVBUF_MISSING
+--- 430,441 ----
+      else
+      {
+  	command_name = cm->fullname;	/* Global pointer for later use */
++ #ifndef DOS
+  	(void) SIG_register (SIGHUP, main_cleanup);
+  	(void) SIG_register (SIGQUIT, main_cleanup);
+  	(void) SIG_register (SIGPIPE, main_cleanup);
++ #endif
++ 	(void) SIG_register (SIGINT, main_cleanup);
+  	(void) SIG_register (SIGTERM, main_cleanup);
+  
+  #ifndef SETVBUF_MISSING
+Only in DOS-OS2/src: makefile.bor
+Only in DOS-OS2/src: makefile.os2
+Only in cvs-1.3/src: mkmodule.c
+diff -cr cvs-1.3/src/modules.c DOS-OS2/src/modules.c
+*** cvs-1.3/src/modules.c	Fri Apr 02 16:24:58 1993
+--- DOS-OS2/src/modules.c	Mon Mar 22 16:26:50 1993
+***************
+*** 60,66 ****
+  			program_name);
+  	error (1, 0, "or specify the '-d' option to %s", program_name);
+      }
+!     (void) sprintf (mfile, "%s/%s/%s", CVSroot, CVSROOTADM, CVSROOTADM_MODULES);
+      return (dbm_open (mfile, O_RDONLY, 0666));
+  }
+  
+--- 60,67 ----
+  			program_name);
+  	error (1, 0, "or specify the '-d' option to %s", program_name);
+      }
+!     (void) sprintf (mfile, "%s%c%s%c%s", CVSroot, DIRSEP,
+! 		    CVSROOTADM, DIRSEP, CVSROOTADM_MODULES);
+      return (dbm_open (mfile, O_RDONLY, 0666));
+  }
+  
+***************
+*** 160,176 ****
+  
+  	/* check to see if mname is a directory or file */
+  
+! 	(void) sprintf (file, "%s/%s", CVSroot, mname);
+! 	if ((acp = rindex (mname, '/')) != NULL)
+  	{
+  	    *acp = '\0';
+! 	    (void) sprintf (attic_file, "%s/%s/%s/%s%s", CVSroot, mname,
+! 			    CVSATTIC, acp + 1, RCSEXT);
+! 	    *acp = '/';
+  	}
+  	else
+! 	    (void) sprintf (attic_file, "%s/%s/%s%s", CVSroot, CVSATTIC,
+! 			    mname, RCSEXT);
+  
+  	if (isdir (file))
+  	{
+--- 161,179 ----
+  
+  	/* check to see if mname is a directory or file */
+  
+! 	(void) sprintf (file, "%s%c%s", CVSroot, DIRSEP, mname);
+! 	if ((acp = rindex_sep (mname)) != NULL)
+  	{
+  	    *acp = '\0';
+! 	    (void) sprintf (attic_file, "%s%c%s%c%s%c%s%s", CVSroot, DIRSEP,
+! 			    mname, DIRSEP,
+! 			    CVSATTIC, DIRSEP, acp + 1, short_names ? RCSEXT_S : RCSEXT);
+! 	    *acp = DIRSEP;
+  	}
+  	else
+! 	    (void) sprintf (attic_file, "%s%c%s%c%s%s", CVSroot, DIRSEP,
+! 			    CVSATTIC, DIRSEP,
+! 			    mname, short_names ? RCSEXT_S : RCSEXT);
+  
+  	if (isdir (file))
+  	{
+***************
+*** 179,195 ****
+  	}
+  	else
+  	{
+! 	    (void) strcat (file, RCSEXT);
+  	    if (isfile (file) || isfile (attic_file))
+  	    {
+  		/* if mname was a file, we have to split it into "dir file" */
+! 		if ((cp = rindex (mname, '/')) != NULL && cp != mname)
+  		{
+  		    char *slashp;
+  
+  		    /* put the ' ' in a copy so we don't mess up the original */
+  		    value = strcpy (xvalue, mname);
+! 		    slashp = rindex (value, '/');
+  		    *slashp = ' ';
+  		}
+  		else
+--- 182,198 ----
+  	}
+  	else
+  	{
+! 	    (void) strcat (file, short_names ? RCSEXT_S : RCSEXT);
+  	    if (isfile (file) || isfile (attic_file))
+  	    {
+  		/* if mname was a file, we have to split it into "dir file" */
+! 		if ((cp = rindex_sep(mname)) != NULL && cp != mname)
+  		{
+  		    char *slashp;
+  
+  		    /* put the ' ' in a copy so we don't mess up the original */
+  		    value = strcpy (xvalue, mname);
+! 		    slashp = rindex_sep (value);
+  		    *slashp = ' ';
+  		}
+  		else
+***************
+*** 218,224 ****
+      }
+  
+      /* look up everything to the first / as a module */
+!     if (mname[0] != '/' && (cp = index (mname, '/')) != NULL)
+      {
+  	/* Make the slash the new end of the string temporarily */
+  	*cp = '\0';
+--- 221,227 ----
+      }
+  
+      /* look up everything to the first / as a module */
+!     if ( !ISDIRSEP(mname[0]) && (cp = index_sep (mname)) != NULL)
+      {
+  	/* Make the slash the new end of the string temporarily */
+  	*cp = '\0';
+***************
+*** 253,265 ****
+  	    mfile = cp + 1;
+  
+  	    /* put the / back in mname */
+! 	    *cp = '/';
+  
+  	    goto found;
+  	}
+  
+  	/* put the / back in mname */
+! 	*cp = '/';
+      }
+  
+      /* if we got here, we couldn't find it using our search, so give up */
+--- 256,268 ----
+  	    mfile = cp + 1;
+  
+  	    /* put the / back in mname */
+! 	    *cp = DIRSEP;
+  
+  	    goto found;
+  	}
+  
+  	/* put the / back in mname */
+! 	*cp = DIRSEP;
+      }
+  
+      /* if we got here, we couldn't find it using our search, so give up */
+***************
+*** 322,329 ****
+  	    {
+  		char nullrepos[PATH_MAX];
+  
+! 		(void) sprintf (nullrepos, "%s/%s/%s", CVSroot,
+! 				CVSROOTADM, CVSNULLREPOS);
+  		if (!isfile (nullrepos))
+  		    (void) mkdir (nullrepos, 0777);
+  		Create_Admin (".", nullrepos, (char *) NULL, (char *) NULL);
+--- 325,332 ----
+  	    {
+  		char nullrepos[PATH_MAX];
+  
+! 		(void) sprintf (nullrepos, "%s%c%s%c%s", CVSroot, DIRSEP,
+! 				CVSROOTADM, DIRSEP, CVSNULLREPOS);
+  		if (!isfile (nullrepos))
+  		    (void) mkdir (nullrepos, 0777);
+  		Create_Admin (".", nullrepos, (char *) NULL, (char *) NULL);
+***************
+*** 331,339 ****
+  		{
+  		    FILE *fp;
+  
+! 		    fp = open_file (CVSADM_ENTSTAT, "w+");
+! 		    if (fclose (fp) == EOF)
+! 			error (1, errno, "cannot close %s", CVSADM_ENTSTAT);
+  		}
+  	    }
+  	  out:
+--- 334,345 ----
+  		{
+  		    FILE *fp;
+  
+! 		    if (short_names)
+! 			fp = open_file (CVSADM_ENTSTAT_S, "w+");
+! 		    else
+! 			fp = open_file (CVSADM_ENTSTAT, "w+");
+! 		    if (fclose(fp) == EOF)
+! 			error(1, errno, "cannot close %s", short_names ? CVSADM_ENTSTAT_S : CVSADM_ENTSTAT);
+  		}
+  	    }
+  	  out:
+***************
+*** 480,496 ****
+  
+  	if (checkin_prog != NULL)
+  	{
+! 	    fp = open_file (CVSADM_CIPROG, "w+");
+  	    (void) fprintf (fp, "%s\n", checkin_prog);
+  	    if (fclose (fp) == EOF)
+! 		error (1, errno, "cannot close %s", CVSADM_CIPROG);
+  	}
+  	if (update_prog != NULL)
+  	{
+! 	    fp = open_file (CVSADM_UPROG, "w+");
+  	    (void) fprintf (fp, "%s\n", update_prog);
+  	    if (fclose (fp) == EOF)
+! 		error (1, errno, "cannot close %s", CVSADM_UPROG);
+  	}
+      }
+  
+--- 486,502 ----
+  
+  	if (checkin_prog != NULL)
+  	{
+! 	    fp = open_file (short_names ? CVSADM_CIPROG_S : CVSADM_CIPROG, "w+");
+  	    (void) fprintf (fp, "%s\n", checkin_prog);
+  	    if (fclose (fp) == EOF)
+! 		error (1, errno, "cannot close %s", short_names ? CVSADM_CIPROG_S : CVSADM_CIPROG);
+  	}
+  	if (update_prog != NULL)
+  	{
+! 	    fp = open_file (short_names ? CVSADM_UPROG_S : CVSADM_UPROG, "w+");
+  	    (void) fprintf (fp, "%s\n", update_prog);
+  	    if (fclose (fp) == EOF)
+! 		error (1, errno, "cannot close %s", short_names ? CVSADM_UPROG_S : CVSADM_UPROG);
+  	}
+      }
+  
+***************
+*** 514,522 ****
+  	    char *prog = (m_type == TAG ? tag_prog : checkout_prog);
+  	    char *real_where = (where != NULL ? where : mwhere);
+  
+! 	    if ((*prog != '/') && (*prog != '.'))
+  	    {
+! 		(void) sprintf (real_prog, "%s/%s", real_where, prog);
+  		if (isfile (real_prog))
+  		    prog = real_prog;
+  	    }
+--- 520,528 ----
+  	    char *prog = (m_type == TAG ? tag_prog : checkout_prog);
+  	    char *real_where = (where != NULL ? where : mwhere);
+  
+! 	    if ((!ISDIRSEP(*prog)) && (*prog != '.'))
+  	    {
+! 		(void) sprintf (real_prog, "%s%c%s", real_where, DIRSEP, prog);
+  		if (isfile (real_prog))
+  		    prog = real_prog;
+  	    }
+diff -cr cvs-1.3/src/no_diff.c DOS-OS2/src/no_diff.c
+*** cvs-1.3/src/no_diff.c	Fri Apr 02 16:24:58 1993
+--- DOS-OS2/src/no_diff.c	Mon Mar 22 16:26:52 1993
+***************
+*** 27,33 ****
+      List *entries;
+  {
+      Node *p;
+!     char tmp[L_tmpnam+1];
+      int ret;
+      char *ts, *options;
+      int retcode = 0;
+--- 27,33 ----
+      List *entries;
+  {
+      Node *p;
+!     char *tmp;
+      int ret;
+      char *ts, *options;
+      int retcode = 0;
+***************
+*** 43,49 ****
+      run_setup ("%s%s -p -q -r%s %s", Rcsbin, RCS_CO,
+  	       vers->vn_user ? vers->vn_user : "", options);
+      run_arg (vers->srcfile->path);
+!     if ((retcode = run_exec (RUN_TTY, tmpnam (tmp), RUN_TTY, RUN_REALLY)) == 0)
+      {
+  	if (!iswritable (file))		/* fix the modes as a side effect */
+  	    xchmod (file, 1);
+--- 43,49 ----
+      run_setup ("%s%s -p -q -r%s %s", Rcsbin, RCS_CO,
+  	       vers->vn_user ? vers->vn_user : "", options);
+      run_arg (vers->srcfile->path);
+!     if ((retcode = run_exec (RUN_TTY, tmp = tempnam ("", TMPPREFIX), RUN_TTY, RUN_REALLY)) == 0)
+      {
+  	if (!iswritable (file))		/* fix the modes as a side effect */
+  	    xchmod (file, 1);
+***************
+*** 80,85 ****
+--- 80,86 ----
+      if (trace)
+  	(void) fprintf (stderr, "-> unlink(%s)\n", tmp);
+      (void) unlink (tmp);
++     free (tmp);
+      free (options);
+      return (ret);
+  }
+diff -cr cvs-1.3/src/parseinf.c DOS-OS2/src/parseinf.c
+*** cvs-1.3/src/parseinf.c	Fri Apr 02 16:24:58 1993
+--- DOS-OS2/src/parseinf.c	Mon Mar 22 15:31:14 1993
+***************
+*** 41,48 ****
+      }
+  
+      /* find the info file and open it */
+!     (void) sprintf (infopath, "%s/%s/%s", CVSroot,
+! 		    CVSROOTADM, infofile);
+      if ((fp_info = fopen (infopath, "r")) == NULL)
+  	return (0);			/* no file -> nothing special done */
+  
+--- 41,48 ----
+      }
+  
+      /* find the info file and open it */
+!     (void) sprintf (infopath, "%s%c%s%c%s", CVSroot, DIRSEP,
+! 		    CVSROOTADM, DIRSEP, infofile);
+      if ((fp_info = fopen (infopath, "r")) == NULL)
+  	return (0);			/* no file -> nothing special done */
+  
+diff -cr cvs-1.3/src/patch.c DOS-OS2/src/patch.c
+*** cvs-1.3/src/patch.c	Fri Apr 02 16:25:00 1993
+--- DOS-OS2/src/patch.c	Mon Mar 22 16:26:56 1993
+***************
+*** 170,179 ****
+  	options = xstrdup ("");
+  
+      /* clean up if we get a signal */
+      (void) SIG_register (SIGHUP, patch_cleanup);
+-     (void) SIG_register (SIGINT, patch_cleanup);
+      (void) SIG_register (SIGQUIT, patch_cleanup);
+      (void) SIG_register (SIGPIPE, patch_cleanup);
+      (void) SIG_register (SIGTERM, patch_cleanup);
+  
+      db = open_module ();
+--- 170,181 ----
+  	options = xstrdup ("");
+  
+      /* clean up if we get a signal */
++ #ifndef DOS
+      (void) SIG_register (SIGHUP, patch_cleanup);
+      (void) SIG_register (SIGQUIT, patch_cleanup);
+      (void) SIG_register (SIGPIPE, patch_cleanup);
++ #endif
++     (void) SIG_register (SIGINT, patch_cleanup);
+      (void) SIG_register (SIGTERM, patch_cleanup);
+  
+      db = open_module ();
+***************
+*** 208,214 ****
+      int which;
+      char repository[PATH_MAX];
+  
+!     (void) sprintf (repository, "%s/%s", CVSroot, argv[0]);
+      (void) strcpy (where, argv[0]);
+  
+      /* if mfile isn't null, we need to set up to do only part of the module */
+--- 210,219 ----
+      int which;
+      char repository[PATH_MAX];
+  
+!     if (short_names)
+! 	(void) sprintf (repository, "%s%c%s%cRCS", CVSroot, DIRSEP, argv[0], DIRSEP);
+!     else
+! 	(void) sprintf (repository, "%s%c%s", CVSroot, DIRSEP, argv[0]);
+      (void) strcpy (where, argv[0]);
+  
+      /* if mfile isn't null, we need to set up to do only part of the module */
+***************
+*** 218,240 ****
+  	char path[PATH_MAX];
+  
+  	/* if the portion of the module is a path, put the dir part on repos */
+! 	if ((cp = rindex (mfile, '/')) != NULL)
+  	{
+  	    *cp = '\0';
+! 	    (void) strcat (repository, "/");
+  	    (void) strcat (repository, mfile);
+! 	    (void) strcat (where, "/");
+  	    (void) strcat (where, mfile);
+  	    mfile = cp + 1;
+  	}
+  
+  	/* take care of the rest */
+! 	(void) sprintf (path, "%s/%s", repository, mfile);
+  	if (isdir (path))
+  	{
+  	    /* directory means repository gets the dir tacked on */
+  	    (void) strcpy (repository, path);
+! 	    (void) strcat (where, "/");
+  	    (void) strcat (where, mfile);
+  	}
+  	else
+--- 223,245 ----
+  	char path[PATH_MAX];
+  
+  	/* if the portion of the module is a path, put the dir part on repos */
+! 	if ((cp = rindex_sep (mfile)) != NULL)
+  	{
+  	    *cp = '\0';
+! 	    (void) strcat (repository, DIRSEPSTR);
+  	    (void) strcat (repository, mfile);
+! 	    (void) strcat (where, DIRSEPSTR);
+  	    (void) strcat (where, mfile);
+  	    mfile = cp + 1;
+  	}
+  
+  	/* take care of the rest */
+! 	(void) sprintf (path, "%s%c%s", repository, DIRSEP, mfile);
+  	if (isdir (path))
+  	{
+  	    /* directory means repository gets the dir tacked on */
+  	    (void) strcpy (repository, path);
+! 	    (void) strcat (where, DIRSEPSTR);
+  	    (void) strcat (where, mfile);
+  	}
+  	else
+***************
+*** 305,311 ****
+      if ((rcsfile->flags & VALID) && (rcsfile->flags & INATTIC))
+  	isattic = 1;
+  
+!     (void) sprintf (rcs, "%s%s", file, RCSEXT);
+  
+      /* if vers_head is NULL, may have been removed from the release */
+      if (isattic && rev2 == NULL && date2 == NULL)
+--- 310,316 ----
+      if ((rcsfile->flags & VALID) && (rcsfile->flags & INATTIC))
+  	isattic = 1;
+  
+!     (void) sprintf (rcs, "%s%s", file, short_names ? RCSEXT_S : RCSEXT);
+  
+      /* if vers_head is NULL, may have been removed from the release */
+      if (isattic && rev2 == NULL && date2 == NULL)
+***************
+*** 446,452 ****
+  		}
+  	    }
+  	    if (CVSroot != NULL)
+! 		(void) sprintf (strippath, "%s/", CVSroot);
+  	    else
+  		(void) strcpy (strippath, REPOS_STRIP);
+  	    if (strncmp (rcs, strippath, strlen (strippath)) == 0)
+--- 451,457 ----
+  		}
+  	    }
+  	    if (CVSroot != NULL)
+! 		(void) sprintf (strippath, "%s%c", CVSroot, DIRSEP);
+  	    else
+  		(void) strcpy (strippath, REPOS_STRIP);
+  	    if (strncmp (rcs, strippath, strlen (strippath)) == 0)
+***************
+*** 456,469 ****
+  	    if (vers_tag != NULL)
+  	    {
+  		(void) sprintf (file1, "%s%s%s:%s", update_dir,
+! 				update_dir[0] ? "/" : "", rcs, vers_tag);
+  	    }
+  	    else
+  	    {
+  		(void) strcpy (file1, DEVNULL);
+  	    }
+  	    (void) sprintf (file2, "%s%s%s:%s", update_dir,
+! 			    update_dir[0] ? "/" : "", rcs,
+  			    vers_head ? vers_head : "removed");
+  	    if (unidiff)
+  	    {
+--- 461,474 ----
+  	    if (vers_tag != NULL)
+  	    {
+  		(void) sprintf (file1, "%s%s%s:%s", update_dir,
+! 				update_dir[0] ? DIRSEPSTR : "", rcs, vers_tag);
+  	    }
+  	    else
+  	    {
+  		(void) strcpy (file1, DEVNULL);
+  	    }
+  	    (void) sprintf (file2, "%s%s%s:%s", update_dir,
+! 			    update_dir[0] ? DIRSEPSTR : "", rcs,
+  			    vers_head ? vers_head : "removed");
+  	    if (unidiff)
+  	    {
+***************
+*** 477,483 ****
+  	    }
+  
+  	    if (update_dir[0] != '\0')
+! 		(void) printf ("%s/", update_dir);
+  	    (void) printf ("%s%s", rcs, cp2);
+  	    while (fgets (line1, sizeof (line1), fp) != NULL)
+  		(void) printf ("%s", line1);
+--- 482,488 ----
+  	    }
+  
+  	    if (update_dir[0] != '\0')
+! 		(void) printf ("%s%c", update_dir, DIRSEP);
+  	    (void) printf ("%s%s", rcs, cp2);
+  	    while (fgets (line1, sizeof (line1), fp) != NULL)
+  		(void) printf ("%s", line1);
+diff -cr cvs-1.3/src/rcs.c DOS-OS2/src/rcs.c
+*** cvs-1.3/src/rcs.c	Fri Apr 02 16:25:00 1993
+--- DOS-OS2/src/rcs.c	Mon Mar 22 16:26:56 1993
+***************
+*** 102,112 ****
+      RCSNode *rcs;
+      char rcsfile[PATH_MAX];
+  
+!     (void) sprintf (rcsfile, "%s/%s%s", repos, file, RCSEXT);
+      if (!isreadable (rcsfile))
+      {
+! 	(void) sprintf (rcsfile, "%s/%s/%s%s", repos, CVSATTIC,
+! 			file, RCSEXT);
+  	if (!isreadable (rcsfile))
+  	    return (NULL);
+  	rcs = RCS_parsercsfile (rcsfile);
+--- 102,112 ----
+      RCSNode *rcs;
+      char rcsfile[PATH_MAX];
+  
+!     (void) sprintf (rcsfile, "%s%c%s%s", repos, DIRSEP, file, short_names ? RCSEXT_S : RCSEXT);
+      if (!isreadable (rcsfile))
+      {
+! 	(void) sprintf (rcsfile, "%s%c%s%c%s%s", repos, DIRSEP, CVSATTIC,
+! 			DIRSEP, file, short_names ? RCSEXT_S : RCSEXT);
+  	if (!isreadable (rcsfile))
+  	    return (NULL);
+  	rcs = RCS_parsercsfile (rcsfile);
+diff -cr cvs-1.3/src/rcs.h DOS-OS2/src/rcs.h
+*** cvs-1.3/src/rcs.h	Fri Apr 02 16:25:00 1993
+--- DOS-OS2/src/rcs.h	Mon Mar 22 16:26:40 1993
+***************
+*** 6,15 ****
+   * 
+   * You may distribute under the terms of the GNU General Public License as
+   * specified in the README file that comes with the CVS 1.3 kit.
+!  * 
+   * RCS source control definitions needed by rcs.c and friends
+   */
+  
+  #define	RCS		"rcs"
+  #define	RCS_CI		"ci"
+  #define	RCS_CO		"co"
+--- 6,26 ----
+   * 
+   * You may distribute under the terms of the GNU General Public License as
+   * specified in the README file that comes with the CVS 1.3 kit.
+!  *
+   * RCS source control definitions needed by rcs.c and friends
+   */
+  
++ #if defined(OS2) || defined(DOS)
++ #define	RCS		"rcs.exe"
++ #define	RCS_CI		"ci.exe"
++ #define	RCS_CO		"co.exe"
++ #define	RCS_RLOG	"rlog.exe"
++ #define	RCS_DIFF	"rcsdiff.exe"
++ #define	RCS_MERGE	"merge.exe"
++ #define	RCS_RCSMERGE	"rcsmerge.exe"
++ #define	RCSEXT_S	""
++ #define RCSEXT		",v"
++ #else
+  #define	RCS		"rcs"
+  #define	RCS_CI		"ci"
+  #define	RCS_CO		"co"
+***************
+*** 17,24 ****
+  #define	RCS_DIFF	"rcsdiff"
+  #define	RCS_MERGE	"merge"
+  #define	RCS_RCSMERGE	"rcsmerge"
+- #define	RCS_MERGE_PAT	"^>>>>>>> "	/* runs "grep" with this pattern */
+  #define	RCSEXT		",v"
+  #define	RCSHEAD		"head"
+  #define	RCSBRANCH	"branch"
+  #define	RCSSYMBOLS	"symbols"
+--- 28,36 ----
+  #define	RCS_DIFF	"rcsdiff"
+  #define	RCS_MERGE	"merge"
+  #define	RCS_RCSMERGE	"rcsmerge"
+  #define	RCSEXT		",v"
++ #endif
++ #define	RCS_MERGE_PAT	"^>>>>>>> "	/* runs "grep" with this pattern */
+  #define	RCSHEAD		"head"
+  #define	RCSBRANCH	"branch"
+  #define	RCSSYMBOLS	"symbols"
+diff -cr cvs-1.3/src/recurse.c DOS-OS2/src/recurse.c
+*** cvs-1.3/src/recurse.c	Fri Apr 02 16:25:02 1993
+--- DOS-OS2/src/recurse.c	Mon Mar 22 16:26:58 1993
+***************
+*** 124,130 ****
+  
+  	/* look for args with /-s in them */
+  	for (i = 0; i < argc; i++)
+! 	    if (index (argv[i], '/') != NULL)
+  		break;
+  
+  	/* if we didn't find any hard one's, do it the easy way */
+--- 124,130 ----
+  
+  	/* look for args with /-s in them */
+  	for (i = 0; i < argc; i++)
+! 	    if (index_sep (argv[i]) != NULL)
+  		break;
+  
+  	/* if we didn't find any hard one's, do it the easy way */
+***************
+*** 143,149 ****
+  			char tmp[PATH_MAX];
+  
+  			repos = Name_Repository ((char *) NULL, update_dir);
+! 			(void) sprintf (tmp, "%s/%s", repos, argv[i]);
+  			if (isdir (tmp))
+  			    addlist (&dirlist, argv[i]);
+  			else
+--- 143,149 ----
+  			char tmp[PATH_MAX];
+  
+  			repos = Name_Repository ((char *) NULL, update_dir);
+! 			(void) sprintf (tmp, "%s%c%s", repos, DIRSEP, argv[i]);
+  			if (isdir (tmp))
+  			    addlist (&dirlist, argv[i]);
+  			else
+***************
+*** 180,192 ****
+  	    {
+  		/* split the arg into the dir and component parts */
+  		dir = xstrdup (argv[i]);
+! 		if ((cp = rindex (dir, '/')) != NULL)
+  		{
+  		    *cp = '\0';
+  		    comp = xstrdup (cp + 1);
+  		    oldupdate = xstrdup (update_dir);
+  		    if (update_dir[0] != '\0')
+! 			(void) strcat (update_dir, "/");
+  		    (void) strcat (update_dir, dir);
+  		}
+  		else
+--- 180,192 ----
+  	    {
+  		/* split the arg into the dir and component parts */
+  		dir = xstrdup (argv[i]);
+! 		if ((cp = rindex_sep (dir)) != NULL)
+  		{
+  		    *cp = '\0';
+  		    comp = xstrdup (cp + 1);
+  		    oldupdate = xstrdup (update_dir);
+  		    if (update_dir[0] != '\0')
+! 			(void) strcat (update_dir, DIRSEPSTR);
+  		    (void) strcat (update_dir, dir);
+  		}
+  		else
+***************
+*** 212,218 ****
+  			char tmp[PATH_MAX];
+  
+  			repos = Name_Repository ((char *) NULL, update_dir);
+! 			(void) sprintf (tmp, "%s/%s", repos, comp);
+  			if (isdir (tmp))
+  			    addlist (&dirlist, comp);
+  			else
+--- 212,218 ----
+  			char tmp[PATH_MAX];
+  
+  			repos = Name_Repository ((char *) NULL, update_dir);
+! 			(void) sprintf (tmp, "%s%c%s", repos, DIRSEP, comp);
+  			if (isdir (tmp))
+  			    addlist (&dirlist, comp);
+  			else
+***************
+*** 430,436 ****
+      {
+  	if (update_dir[0] != '\0')
+  	{
+! 	    (void) strcat (update_dir, "/");
+  	    (void) strcat (update_dir, dir);
+  	}
+  	else
+--- 430,436 ----
+      {
+  	if (update_dir[0] != '\0')
+  	{
+! 	    (void) strcat (update_dir, DIRSEPSTR);
+  	    (void) strcat (update_dir, dir);
+  	}
+  	else
+***************
+*** 446,452 ****
+  	if (repository == NULL)
+  	    newrepos[0] = '\0';
+  	else
+! 	    (void) sprintf (newrepos, "%s/%s", repository, dir);
+      }
+      else
+      {
+--- 446,452 ----
+  	if (repository == NULL)
+  	    newrepos[0] = '\0';
+  	else
+! 	    (void) sprintf (newrepos, "%s%c%s", repository, DIRSEP, dir);
+      }
+      else
+      {
+***************
+*** 508,514 ****
+      }
+  
+      /* put back update_dir */
+!     if ((cp = rindex (update_dir, '/')) != NULL)
+  	*cp = '\0';
+      else
+  	update_dir[0] = '\0';
+--- 508,514 ----
+      }
+  
+      /* put back update_dir */
+!     if ((cp = rindex_sep (update_dir)) != NULL)
+  	*cp = '\0';
+      else
+  	update_dir[0] = '\0';
+diff -cr cvs-1.3/src/remove.c DOS-OS2/src/remove.c
+*** cvs-1.3/src/remove.c	Fri Apr 02 16:25:02 1993
+--- DOS-OS2/src/remove.c	Mon Mar 22 16:26:58 1993
+***************
+*** 129,138 ****
+  	 * entries file.
+  	 */
+  	Scratch_Entry (entries, file);
+! 	(void) sprintf (fname, "%s/%s%s", CVSADM, file, CVSEXT_OPT);
+  	(void) unlink_file (fname);
+! 	(void) sprintf (fname, "%s/%s%s", CVSADM, file, CVSEXT_LOG);
+  	(void) unlink_file (fname);
+  	if (!quiet)
+  	    error (0, 0, "removed `%s'.", file);
+  	auto_removed_files++;
+--- 129,145 ----
+  	 * entries file.
+  	 */
+  	Scratch_Entry (entries, file);
+! #if defined(OS2) || defined(DOS)
+! 	(void) sprintf (fname, "%s%c%s%c%s", CVSADM, DIRSEP, CVSEXT_OPT, DIRSEP, file);
+  	(void) unlink_file (fname);
+! 	(void) sprintf (fname, "%s%c%s%c%s", CVSADM, DIRSEP, CVSEXT_LOG, DIRSEP, file);
+  	(void) unlink_file (fname);
++ #else
++ 	(void) sprintf (fname, "%s%c%s%s", CVSADM, DIRSEP, file, CVSEXT_OPT);
++ 	(void) unlink_file (fname);
++ 	(void) sprintf (fname, "%s%c%s%s", CVSADM, DIRSEP, file, CVSEXT_LOG);
++ 	(void) unlink_file (fname);
++ #endif
+  	if (!quiet)
+  	    error (0, 0, "removed `%s'.", file);
+  	auto_removed_files++;
+diff -cr cvs-1.3/src/repos.c DOS-OS2/src/repos.c
+*** cvs-1.3/src/repos.c	Fri Apr 02 16:25:02 1993
+--- DOS-OS2/src/repos.c	Mon Mar 22 16:26:58 1993
+***************
+*** 17,23 ****
+  #endif
+  
+  char *
+! Name_Repository (dir, update_dir)
+      char *dir;
+      char *update_dir;
+  {
+--- 17,23 ----
+  #endif
+  
+  char *
+! Name_Repository (dir,update_dir)
+      char *dir;
+      char *update_dir;
+  {
+***************
+*** 38,45 ****
+  
+      if (dir != NULL)
+      {
+! 	(void) sprintf (cvsadm, "%s/%s", dir, CVSADM);
+! 	(void) sprintf (ocvsadm, "%s/%s", dir, OCVSADM);
+      }
+      else
+      {
+--- 38,45 ----
+  
+      if (dir != NULL)
+      {
+! 	(void) sprintf (cvsadm, "%s%c%s", dir, DIRSEP, CVSADM);
+! 	(void) sprintf (ocvsadm, "%s%c%s", dir, DIRSEP, OCVSADM);
+      }
+      else
+      {
+***************
+*** 79,85 ****
+      }
+  
+      if (dir != NULL)
+! 	(void) sprintf (tmp, "%s/%s", dir, CVSADM_ENT);
+      else
+  	(void) strcpy (tmp, CVSADM_ENT);
+  
+--- 79,85 ----
+      }
+  
+      if (dir != NULL)
+! 	(void) sprintf (tmp, "%s%c%s", dir, DIRSEP, CVSADM_ENT);
+      else
+  	(void) strcpy (tmp, CVSADM_ENT);
+  
+***************
+*** 90,98 ****
+      }
+  
+      if (dir != NULL)
+! 	(void) sprintf (tmp, "%s/%s", dir, CVSADM_REP);
+      else
+! 	(void) strcpy (tmp, CVSADM_REP);
+  
+      if (!isreadable (tmp))
+      {
+--- 90,98 ----
+      }
+  
+      if (dir != NULL)
+! 	(void) sprintf (tmp, "%s%c%s", dir, DIRSEP, short_names ? CVSADM_REP_S : CVSADM_REP);
+      else
+! 	(void) strcpy (tmp, short_names ? CVSADM_REP_S : CVSADM_REP);
+  
+      if (!isreadable (tmp))
+      {
+***************
+*** 109,115 ****
+      if (fgets (repos, PATH_MAX, fpin) == NULL)
+      {
+  	error (0, 0, "in directory %s:", xupdate_dir);
+! 	error (1, errno, "cannot read %s", CVSADM_REP);
+      }
+      (void) fclose (fpin);
+      if ((cp = rindex (repos, '\n')) != NULL)
+--- 109,115 ----
+      if (fgets (repos, PATH_MAX, fpin) == NULL)
+      {
+  	error (0, 0, "in directory %s:", xupdate_dir);
+! 	error (1, errno, "cannot read %s", short_names ? CVSADM_REP_S : CVSADM_REP);
+      }
+      (void) fclose (fpin);
+      if ((cp = rindex (repos, '\n')) != NULL)
+***************
+*** 120,132 ****
+       * one by tacking on the CVSROOT environment variable. If the CVSROOT
+       * environment variable is not set, die now.
+       */
+!     if (strcmp (repos, "..") == 0 || strncmp (repos, "../", 3) == 0)
+      {
+  	error (0, 0, "in directory %s:", xupdate_dir);
+  	error (0, 0, "`..'-relative repositories are not supported.");
+  	error (1, 0, "illegal source repository");
+      }
+!     if (repos[0] != '/')
+      {
+  	if (CVSroot == NULL)
+  	{
+--- 120,138 ----
+       * one by tacking on the CVSROOT environment variable. If the CVSROOT
+       * environment variable is not set, die now.
+       */
+!     if (strcmp (repos, "..") == 0 || strncmp (repos, "../", 3) == 0 ||
+! 	strncmp (repos, "..\\", 3) == 0)
+      {
+  	error (0, 0, "in directory %s:", xupdate_dir);
+  	error (0, 0, "`..'-relative repositories are not supported.");
+  	error (1, 0, "illegal source repository");
+      }
+! #if defined(OS2) || defined (DOS)	/* checking for drive required */
+!     if( !(( strlen(repos) >= 2 && repos[1] == ':') ||
+! 	  ( ISDIRSEP(repos[0]))))
+! #else				/* not OS/2 */
+!     if ( !ISDIRSEP(repos[0]))
+! #endif				/* OS/2 */
+      {
+  	if (CVSroot == NULL)
+  	{
+***************
+*** 136,142 ****
+  	    error (1, 0, "illegal repository setting");
+  	}
+  	(void) strcpy (path, repos);
+! 	(void) sprintf (repos, "%s/%s", CVSroot, path);
+      }
+      if (!isdir (repos))
+      {
+--- 142,148 ----
+  	    error (1, 0, "illegal repository setting");
+  	}
+  	(void) strcpy (path, repos);
+! 	(void) sprintf (repos, "%s%c%s", CVSroot, DIRSEP, path);
+      }
+      if (!isdir (repos))
+      {
+diff -cr cvs-1.3/src/rtag.c DOS-OS2/src/rtag.c
+*** cvs-1.3/src/rtag.c	Fri Apr 02 16:25:02 1993
+--- DOS-OS2/src/rtag.c	Mon Mar 22 16:26:58 1993
+***************
+*** 168,174 ****
+      char repository[PATH_MAX];
+      char where[PATH_MAX];
+  
+!     (void) sprintf (repository, "%s/%s", CVSroot, argv[0]);
+      (void) strcpy (where, argv[0]);
+  
+      /* if mfile isn't null, we need to set up to do only part of the module */
+--- 168,177 ----
+      char repository[PATH_MAX];
+      char where[PATH_MAX];
+  
+!     if (short_names)
+! 	(void) sprintf (repository, "%s%c%s%cRCS", CVSroot, DIRSEP, argv[0], DIRSEP);
+!     else
+! 	(void) sprintf (repository, "%s%c%s", CVSroot, DIRSEP, argv[0]);
+      (void) strcpy (where, argv[0]);
+  
+      /* if mfile isn't null, we need to set up to do only part of the module */
+***************
+*** 178,200 ****
+  	char path[PATH_MAX];
+  
+  	/* if the portion of the module is a path, put the dir part on repos */
+! 	if ((cp = rindex (mfile, '/')) != NULL)
+  	{
+  	    *cp = '\0';
+! 	    (void) strcat (repository, "/");
+  	    (void) strcat (repository, mfile);
+! 	    (void) strcat (where, "/");
+  	    (void) strcat (where, mfile);
+  	    mfile = cp + 1;
+  	}
+  
+  	/* take care of the rest */
+! 	(void) sprintf (path, "%s/%s", repository, mfile);
+  	if (isdir (path))
+  	{
+  	    /* directory means repository gets the dir tacked on */
+  	    (void) strcpy (repository, path);
+! 	    (void) strcat (where, "/");
+  	    (void) strcat (where, mfile);
+  	}
+  	else
+--- 181,203 ----
+  	char path[PATH_MAX];
+  
+  	/* if the portion of the module is a path, put the dir part on repos */
+! 	if ((cp = rindex_sep (mfile)) != NULL)
+  	{
+  	    *cp = '\0';
+! 	    (void) strcat (repository, DIRSEPSTR);
+  	    (void) strcat (repository, mfile);
+! 	    (void) strcat (where, DIRSEPSTR);
+  	    (void) strcat (where, mfile);
+  	    mfile = cp + 1;
+  	}
+  
+  	/* take care of the rest */
+! 	(void) sprintf (path, "%s%c%s", repository, DIRSEP, mfile);
+  	if (isdir (path))
+  	{
+  	    /* directory means repository gets the dir tacked on */
+  	    (void) strcpy (repository, path);
+! 	    (void) strcat (where, DIRSEPSTR);
+  	    (void) strcat (where, mfile);
+  	}
+  	else
+Only in DOS-OS2/src: spawnvpq.c
+diff -cr cvs-1.3/src/subr.c DOS-OS2/src/subr.c
+*** cvs-1.3/src/subr.c	Fri Apr 02 16:25:04 1993
+--- DOS-OS2/src/subr.c	Wed Jun 09 13:20:30 1993
+***************
+*** 27,32 ****
+--- 27,39 ----
+  #define va_dcl char *a1, *a2, *a3, *a4, *a5, *a6, *a7, *a8;
+  #endif
+  
++ #if defined(OS2) || defined(DOS)
++ #ifdef DOS
++ #undef const
++ #endif
++ #include <process.h>
++ #endif
++ 
+  #ifndef lint
+  static char rcsid[] = "@(#)subr.c 1.52 92/03/31";
+  #endif
+***************
+*** 62,73 ****
+      if (noexec)
+  	return;
+  
+!     if ((fdin = open (from, O_RDONLY)) < 0)
+  	error (1, errno, "cannot open %s for copying", from);
+      if (fstat (fdin, &sb) < 0)
+  	error (1, errno, "cannot fstat %s", from);
+      if ((fdout = creat (to, (int) sb.st_mode & 07777)) < 0)
+  	error (1, errno, "cannot create %s for copying", to);
+      if (sb.st_size > 0)
+      {
+  	buf = xmalloc ((int) sb.st_size);
+--- 69,101 ----
+      if (noexec)
+  	return;
+  
+!     if ((fdin = open (from, O_RDONLY|O_BINARY)) < 0)
+  	error (1, errno, "cannot open %s for copying", from);
+      if (fstat (fdin, &sb) < 0)
+  	error (1, errno, "cannot fstat %s", from);
++ #if defined(OS2) || defined(DOS)
++     if ((fdout = open (to, O_WRONLY|O_TRUNC|O_CREAT|O_BINARY,
++ 	(int) sb.st_mode & 07777)) < 0)
++ #else
+      if ((fdout = creat (to, (int) sb.st_mode & 07777)) < 0)
++ #endif
+  	error (1, errno, "cannot create %s for copying", to);
++ 
++ #if defined(DOS)
++     if (sb.st_size > 0)
++     {
++ 	int count;
++ 
++ 	buf = xmalloc (1024);
++ 	while( (count = read (fdin, buf, 1024)) > 0 )
++ 	    if (write (fdout, buf, count) != count){
++ 		error (1, errno, "cannot write file %s for copying", to);
++ 	}
++ 	if (count == -1)
++ 	    error (1, errno, "cannot read file %s for copying", from);
++ 	free (buf);
++     }
++ #else  /* not DOS */
+      if (sb.st_size > 0)
+      {
+  	buf = xmalloc ((int) sb.st_size);
+***************
+*** 83,88 ****
+--- 111,117 ----
+  	}
+  	free (buf);
+      }
++ #endif	/* DOS */
+      (void) close (fdin);
+      if (close (fdout) < 0)
+  	error (1, errno, "cannot close %s", to);
+***************
+*** 170,180 ****
+      char *name;
+      char *mode;
+  {
+!     FILE *fp;
+  
+!     if ((fp = fopen (name, mode)) == NULL)
+! 	error (1, errno, "cannot open %s", name);
+!     return (fp);
+  }
+  
+  /*
+--- 199,209 ----
+      char *name;
+      char *mode;
+  {
+!   FILE *fp;
+  
+!   if ((fp = fopen (name, mode)) == NULL)
+!     error (1, errno, "cannot open %s (mode %s)", name, mode);
+!   return (fp);
+  }
+  
+  /*
+***************
+*** 245,255 ****
+  	error (0, errno, "cannot make path to %s", name);
+  	return;
+      }
+!     if ((cp = rindex (name, '/')) == NULL)
+  	return;
+      *cp = '\0';
+      make_directories (name);
+!     *cp++ = '/';
+      if (*cp == '\0')
+  	return;
+      (void) mkdir (name, 0777);
+--- 274,284 ----
+  	error (0, errno, "cannot make path to %s", name);
+  	return;
+      }
+!     if ((cp = rindex_sep (name)) == NULL)
+  	return;
+      *cp = '\0';
+      make_directories (name);
+!     *cp++ = DIRSEP;
+      if (*cp == '\0')
+  	return;
+      (void) mkdir (name, 0777);
+***************
+*** 260,272 ****
+   */
+  char *
+  xmalloc (bytes)
+!     int bytes;
+  {
+      char *cp;
+  
+      if (bytes <= 0)
+  	error (1, 0, "bad malloc size %d", bytes);
+!     if ((cp = malloc ((unsigned) bytes)) == NULL)
+  	error (1, 0, "malloc failed");
+      return (cp);
+  }
+--- 289,301 ----
+   */
+  char *
+  xmalloc (bytes)
+!     size_t bytes;
+  {
+      char *cp;
+  
+      if (bytes <= 0)
+  	error (1, 0, "bad malloc size %d", bytes);
+!     if ((cp = malloc (bytes)) == NULL)
+  	error (1, 0, "malloc failed");
+      return (cp);
+  }
+***************
+*** 279,285 ****
+  char *
+  xrealloc (ptr, bytes)
+      char *ptr;
+!     int bytes;
+  {
+      char *cp;
+  
+--- 308,314 ----
+  char *
+  xrealloc (ptr, bytes)
+      char *ptr;
+!     size_t bytes;
+  {
+      char *cp;
+  
+***************
+*** 288,294 ****
+  
+      if (bytes <= 0)
+  	error (1, 0, "bad realloc size %d", bytes);
+!     if ((cp = realloc (ptr, (unsigned) bytes)) == NULL)
+  	error (1, 0, "realloc failed");
+      return (cp);
+  }
+--- 317,323 ----
+  
+      if (bytes <= 0)
+  	error (1, 0, "bad realloc size %d", bytes);
+!     if ((cp = realloc (ptr, bytes)) == NULL)
+  	error (1, 0, "realloc failed");
+      return (cp);
+  }
+***************
+*** 328,333 ****
+--- 357,372 ----
+  	    error (0, errno, "cannot stat %s", fname);
+  	return;
+      }
++ #if defined(OS2) || defined(DOS)
++     if (writable)
++     {
++ 	mode = sb.st_mode | S_IWRITE;
++     }
++     else
++     {
++ 	mode = sb.st_mode & ~S_IWRITE;
++     }
++ #else /* not OS/2 */
+      if (writable)
+      {
+  	oumask = umask (0);
+***************
+*** 338,343 ****
+--- 377,383 ----
+      {
+  	mode = sb.st_mode & ~(S_IWRITE | S_IWGRP | S_IWOTH);
+      }
++ #endif /* OS/2 */
+  
+      if (trace)
+  	(void) fprintf (stderr, "-> chmod(%s,%o)\n", fname, mode);
+***************
+*** 361,384 ****
+      if (noexec)
+  	return;
+  
+      if (rename (from, to) < 0)
+  	error (1, errno, "cannot rename file %s to %s", from, to);
+  }
+  
+  /*
+   * link a file, if possible.
+   */
+  int
+  link_file (from, to)
+      char *from, *to;
+  {
+!     if (trace)
+! 	(void) fprintf (stderr, "-> link(%s,%s)\n", from, to);
+!     if (noexec)
+! 	return (0);
+  
+!     return (link (from, to));
+  }
+  
+  /*
+   * unlink a file, if possible.
+--- 401,433 ----
+      if (noexec)
+  	return;
+  
++ #if defined(OS2) || defined(DOS)
++     chmod( to, S_IWRITE);
++     unlink( to);
++     if (rename (from, to) < 0)
++ 	error (1, errno, "cannot rename file %s to %s", from, to);
++ #else
+      if (rename (from, to) < 0)
+  	error (1, errno, "cannot rename file %s to %s", from, to);
++ #endif
+  }
+  
+  /*
+   * link a file, if possible.
+   */
++ #ifndef LINK_MISSING
+  int
+  link_file (from, to)
+      char *from, *to;
+  {
+!   if (trace)
+!     (void) fprintf (stderr, "-> link(%s,%s)\n", from, to);
+!   if (noexec)
+!     return (0);
+  
+!   return (link (from, to));
+  }
++ #endif
+  
+  /*
+   * unlink a file, if possible.
+***************
+*** 397,403 ****
+  
+  /*
+   * Compare "file1" to "file2". Return non-zero if they don't compare exactly.
+!  * 
+   * mallocs a buffer large enough to hold the entire file and does two reads to
+   * load the buffer and calls bcmp to do the cmp. This is reasonable, since
+   * source files are typically not too large.
+--- 446,452 ----
+  
+  /*
+   * Compare "file1" to "file2". Return non-zero if they don't compare exactly.
+!  *
+   * mallocs a buffer large enough to hold the entire file and does two reads to
+   * load the buffer and calls bcmp to do the cmp. This is reasonable, since
+   * source files are typically not too large.
+***************
+*** 410,416 ****
+      register char *buf1, *buf2;
+      struct stat sb;
+      off_t size;
+!     int ret, fd1, fd2;
+  
+      if ((fd1 = open (file1, O_RDONLY)) < 0)
+  	error (1, errno, "cannot open file %s for comparing", file1);
+--- 459,465 ----
+      register char *buf1, *buf2;
+      struct stat sb;
+      off_t size;
+!     int ret, fd1, fd2, r1, r2;
+  
+      if ((fd1 = open (file1, O_RDONLY)) < 0)
+  	error (1, errno, "cannot open file %s for comparing", file1);
+***************
+*** 427,441 ****
+  	    ret = 0;
+  	else
+  	{
+  	    buf1 = xmalloc ((int) size);
+  	    buf2 = xmalloc ((int) size);
+! 	    if (read (fd1, buf1, (int) size) != (int) size)
+! 		error (1, errno, "cannot read file %s cor comparing", file1);
+! 	    if (read (fd2, buf2, (int) size) != (int) size)
+  		error (1, errno, "cannot read file %s for comparing", file2);
+! 	    ret = bcmp (buf1, buf2, (int) size);
+  	    free (buf1);
+  	    free (buf2);
+  	}
+      }
+      else
+--- 476,513 ----
+  	    ret = 0;
+  	else
+  	{
++ #if defined(DOS)
++ 	    /* DOS cant't handle reads with large file sizes */
++ 	    int count, c2;
++ 
++ 	    buf1 = xmalloc (1024);
++ 	    buf2 = xmalloc (1024);
++ 	    while( (count=read(fd1, buf1, 1024)) > 0) {
++ 	      if ((c2 = read (fd2, buf2, 1024)) != count) {
++ 		error (1, errno, "cannot read file %s for comparing", file2);
++ 	      }
++ 	      if( (ret = bcmp (buf1, buf2, count)) != 0) break;
++ 	    }
++ 	    if (count == -1)
++ 		error (1, errno, "cannot read file %s for comparing", file1);
++ 	    free (buf1);
++ 	    free (buf2);
++ #else /* not DOS */
+  	    buf1 = xmalloc ((int) size);
+  	    buf2 = xmalloc ((int) size);
+! 	    r1 = read (fd1, buf1, (int) size);
+!             if (r1 == -1)
+! 		error (1, errno, "cannot read file %s for comparing", file1);
+! 	    r2 = read (fd2, buf2, (int) size);
+!             if (r2 == -1)
+  		error (1, errno, "cannot read file %s for comparing", file2);
+!             if (r1 != r2)
+!                 ret = 1;
+!             else
+!                 ret = bcmp (buf1, buf2, r1);
+  	    free (buf1);
+  	    free (buf2);
++ #endif
+  	}
+      }
+      else
+***************
+*** 509,519 ****
+  char *
+  getcaller ()
+  {
+      static char uidname[20];
+      struct passwd *pw;
+-     char *name;
+      int uid;
+  
+      uid = getuid ();
+      if (uid == 0)
+      {
+--- 581,600 ----
+  char *
+  getcaller ()
+  {
++ 
++ #ifndef DOS
+      static char uidname[20];
+      struct passwd *pw;
+      int uid;
++ #endif
++     char *name;
+  
++ #ifdef DOS
++     if (((name = getenv("LOGNAME")) || (name = getenv("USER"))) && *name)
++ 	return (name);
++     else
++ 	return ("UNKOWN");
++ #else
+      uid = getuid ();
+      if (uid == 0)
+      {
+***************
+*** 528,533 ****
+--- 609,615 ----
+  	return (uidname);
+      }
+      return (pw->pw_name);
++ #endif
+  }
+  
+  /*
+***************
+*** 666,677 ****
+--- 748,762 ----
+      char *sterr;
+      int flags;
+  {
++ #if !defined(OS2) && !defined(DOS)	/* not OS/2, standard UNIX handling */
+      int shin, shout, sherr;
+      int mode_out, mode_err;
+      int status = -1;
+      int rerrno = 0;
+      int pid, w;
+  
++ 
++ 
+  #ifdef POSIX
+      sigset_t sigset_mask, sigset_omask;
+      struct sigaction act, iact, qact;
+***************
+*** 768,774 ****
+  	rerrno = errno;
+  	goto out;
+      }
+- 
+      /* the parent.  Ignore some signals for now */
+  #ifdef POSIX
+      if (flags & RUN_SIGIGNORE)
+--- 853,858 ----
+***************
+*** 814,819 ****
+--- 898,904 ----
+  	    break;
+      }
+  #endif
++ 
+      if (w == -1)
+      {
+  	status = -1;
+***************
+*** 869,874 ****
+--- 954,1087 ----
+      if (rerrno)
+  	errno = rerrno;
+      return (status);
++ 
++ #else  /* OS2 */
++     int shin, shout, sherr;
++     int sain, saout, saerr;	/* saved handles */
++     int mode_out, mode_err;
++     int status = -1;
++     int rerrno = 0;
++     int rval   = -1;
++     int pid, w;
++ 
++     if (trace)			/* if in trace mode */
++     {
++ 	(void) fprintf (stderr, "-> system(");
++ 	run_print (stderr);
++ 	(void) fprintf (stderr, ")\n");
++     }
++     if (noexec && (flags & RUN_REALLY) == 0) /* if in noexec mode */
++ 	return (0);
++ 
++     /*
++      * start the engine and take off
++      */
++ 
++     /* make sure that we are null terminated, since we didn't calloc */
++     run_add_arg ((char *) 0);
++ 
++     /* setup default file descriptor numbers */
++     shin = 0;
++     shout = 1;
++     sherr = 2;
++ 
++     /* set the file modes for stdout and stderr */
++     mode_out = mode_err = O_WRONLY | O_CREAT;
++     mode_out |= ((flags & RUN_STDOUT_APPEND) ? O_APPEND : O_TRUNC);
++     mode_err |= ((flags & RUN_STDERR_APPEND) ? O_APPEND : O_TRUNC);
++ 
++     /* open the files as required, shXX are shadows of stdin... */
++     if (stin && (shin = open (stin, O_RDONLY)) == -1)
++     {
++ 	rerrno = errno;
++ 	error (0, errno, "cannot open %s for reading (prog %s)",
++ 	       stin, run_argv[0]);
++ 	goto out0;
++     }
++     if (stout && (shout = open (stout, mode_out, 0666)) == -1)
++     {
++ 	rerrno = errno;
++ 	error (0, errno, "cannot open %s for writing (prog %s)",
++ 	       stout, run_argv[0]);
++ 	goto out1;
++     }
++     if (sterr && (flags & RUN_COMBINED) == 0)
++     {
++ 	if ((sherr = open (sterr, mode_err, 0666)) == -1)
++ 	{
++ 	    rerrno = errno;
++ 	    error (0, errno, "cannot open %s for writing (prog %s)",
++ 		   sterr, run_argv[0]);
++ 	    goto out2;
++ 	}
++     }
++     /* now save the standard handles, if required */
++     sain = saout = saerr = -1;
++     if (shin  != 0) sain  = dup( 0); /* dup stdin  */
++     if (shout != 1) saout = dup( 1); /* dup stdout */
++     if (sherr != 2) saerr = dup( 2); /* dup stderr */
++ 
++     /* the new handles will be dup'd to the standard handles
++      * for the spawn.
++      */
++ 
++     if (shin != 0)
++       {
++ 	(void) dup2 (shin, 0);
++ 	(void) close (shin);
++       }
++     if (shout != 1)
++       {
++ 	(void) dup2 (shout, 1);
++ 	(void) close (shout);
++       }
++     if (flags & RUN_COMBINED)
++       (void) dup2 (1, 2);
++     else if (sherr != 2)
++       {
++ 	(void) dup2 (sherr, 2);
++ 	(void) close (sherr);
++       }
++ 
++     /* dup'ing is done.  try to run it now */
++ #ifdef DOS
++     rval = spawnvpq ( P_WAIT, run_argv[0], run_argv);
++ #else
++     rval = spawnvp ( P_WAIT, run_argv[0], run_argv);
++ #endif
++     /* restore the original file handles   */
++     if (sain  != -1) {
++       (void) dup2( sain, 0);	/* re-connect stdin  */
++       (void) close( sain);
++     }
++     if (saout != -1) {
++       (void) dup2( saout, 1);	/* re-connect stdout */
++       (void) close( saout);
++     }
++     if (saerr != -1) {
++       (void) dup2( saerr, 2);	/* re-connect stderr */
++       (void) close( saerr);
++     }
++     return rval;		/* end, if all went coorect */
++ 
++     /* error cases */
++     /* cleanup the open file descriptors */
++   out:
++     if (sterr)
++ 	(void) close (sherr);
++   out2:
++     if (stout)
++ 	(void) close (shout);
++   out1:
++     if (stin)
++ 	(void) close (shin);
++ 
++   out0:
++     if (rerrno)
++ 	errno = rerrno;
++     return (status);
++ #endif /* OS2 */
++ 
+  }
+  
+  void
+***************
+*** 879,885 ****
+  
+      for (i = 0; i < run_argc; i++)
+      {
+! 	(void) fprintf (fp, "%s", run_argv[i]);
+  	if (i != run_argc - 1)
+  	    (void) fprintf (fp, " ");
+      }
+--- 1092,1098 ----
+  
+      for (i = 0; i < run_argc; i++)
+      {
+! 	(void) fprintf (fp, "'%s'", run_argv[i]);
+  	if (i != run_argc - 1)
+  	    (void) fprintf (fp, " ");
+      }
+***************
+*** 910,912 ****
+--- 1123,1160 ----
+  }
+  #endif
+  #endif
++ 
++ 
++ #if defined(OS2) || defined(DOS)
++ char *index_sep(char *path)
++ {
++   char *p1 = strchr(path, '\\');
++   char *p2 = strchr(path, '/');
++   if ( !p1 ) return p2;
++   if ( !p2 ) return p1;
++   return (p1 > p2) ? p2 : p1;
++ }
++ 
++ 
++ char *rindex_sep(char *path)
++ {
++   char *p1 = strrchr(path, '\\');
++   char *p2 = strrchr(path, '/');
++   if ( !p1 ) return p2;
++   if ( !p2 ) return p1;
++   return (p1 > p2) ? p1 : p2;
++ }
++ 
++ 
++ #ifndef DOS
++ int _chmod( char *path, int mode)
++ {
++   if( trace) fprintf( stderr, "-> _chmod( %s, %o)\n", path, mode);
++ #undef chmod
++   return chmod( path, mode);
++ #define chmod( x, y) _chmod( x,y)
++ }
++ #endif
++ 
++ #endif /* OS/2 */
++ 
+diff -cr cvs-1.3/src/tag.c DOS-OS2/src/tag.c
+*** cvs-1.3/src/tag.c	Fri Apr 02 16:25:04 1993
+--- DOS-OS2/src/tag.c	Mon Mar 22 16:27:00 1993
+***************
+*** 161,167 ****
+  	if (!really_quiet)
+  	{
+  	    if (update_dir[0])
+! 		(void) printf ("D %s/%s\n", update_dir, file);
+  	    else
+  		(void) printf ("D %s\n", file);
+  	}
+--- 161,167 ----
+  	if (!really_quiet)
+  	{
+  	    if (update_dir[0])
+! 		(void) printf ("D %s%c%s\n", update_dir, DIRSEP, file);
+  	    else
+  		(void) printf ("D %s\n", file);
+  	}
+***************
+*** 238,244 ****
+      if (!really_quiet)
+      {
+  	if (update_dir[0])
+! 	    (void) printf ("T %s/%s\n", update_dir, file);
+  	else
+  	    (void) printf ("T %s\n", file);
+      }
+--- 238,244 ----
+      if (!really_quiet)
+      {
+  	if (update_dir[0])
+! 	    (void) printf ("T %s%c%s\n", update_dir, DIRSEP, file);
+  	else
+  	    (void) printf ("T %s\n", file);
+      }
+diff -cr cvs-1.3/src/update.c DOS-OS2/src/update.c
+*** cvs-1.3/src/update.c	Fri Apr 02 16:25:04 1993
+--- DOS-OS2/src/update.c	Sun Jul 11 15:00:34 1993
+***************
+*** 11,17 ****
+   * 
+   * The present version can be committed by "commit", but this keeps the version
+   * in tact.
+!  * 
+   * Arguments following the options are taken to be file names to be updated,
+   * rather than updating the entire directory.
+   * 
+--- 11,17 ----
+   * 
+   * The present version can be committed by "commit", but this keeps the version
+   * in tact.
+!  *
+   * Arguments following the options are taken to be file names to be updated,
+   * rather than updating the entire directory.
+   * 
+***************
+*** 26,32 ****
+   * 
+   * Files added but not yet committed are reported as A <user_file>. Files
+   * removed but not yet committed are reported as R <user_file>.
+!  * 
+   * If the current directory contains subdirectories that hold concurrent
+   * versions, these are updated too.  If the -d option was specified, new
+   * directories added to the repository are automatically created and updated
+--- 26,32 ----
+   * 
+   * Files added but not yet committed are reported as A <user_file>. Files
+   * removed but not yet committed are reported as R <user_file>.
+!  *
+   * If the current directory contains subdirectories that hold concurrent
+   * versions, these are updated too.  If the -d option was specified, new
+   * directories added to the repository are automatically created and updated
+***************
+*** 192,198 ****
+      if (argc <= 0 && !pipeout)
+      {
+  	if (update_build_dirs)
+! 	    (void) unlink_file (CVSADM_ENTSTAT);
+  
+  	/* keep the CVS/Tag file current with the specified arguments */
+  	if (aflag || tag || date)
+--- 192,198 ----
+      if (argc <= 0 && !pipeout)
+      {
+  	if (update_build_dirs)
+! 	    (void) unlink_file (short_names ? CVSADM_ENTSTAT_S : CVSADM_ENTSTAT);
+  
+  	/* keep the CVS/Tag file current with the specified arguments */
+  	if (aflag || tag || date)
+***************
+*** 471,477 ****
+  	{
+  	    char tmp[PATH_MAX];
+  
+! 	    (void) sprintf (tmp, "%s/%s", dir, CVSADM_ENTSTAT);
+  	    (void) unlink_file (tmp);
+  	}
+  
+--- 471,477 ----
+  	{
+  	    char tmp[PATH_MAX];
+  
+! 	    (void) sprintf (tmp, "%s%c%s", dir, DIRSEP, short_names ? CVSADM_ENTSTAT_S : CVSADM_ENTSTAT);
+  	    (void) unlink_file (tmp);
+  	}
+  
+***************
+*** 506,512 ****
+  
+      /* run the update_prog if there is one */
+      if (err == 0 && !pipeout && !noexec &&
+! 	(fp = fopen (CVSADM_UPROG, "r")) != NULL)
+      {
+  	char *cp;
+  	char *repository;
+--- 506,512 ----
+  
+      /* run the update_prog if there is one */
+      if (err == 0 && !pipeout && !noexec &&
+! 	(fp = fopen (short_names ? CVSADM_UPROG_S : CVSADM_UPROG, "r")) != NULL)
+      {
+  	char *cp;
+  	char *repository;
+***************
+*** 612,618 ****
+      /* don't screw with backup files if we're going to stdout */
+      if (!pipeout)
+      {
+! 	(void) sprintf (backup, "%s/%s%s", CVSADM, CVSPREFIX, file);
+  	if (isfile (file))
+  	    rename_file (file, backup);
+  	else
+--- 612,618 ----
+      /* don't screw with backup files if we're going to stdout */
+      if (!pipeout)
+      {
+! 	(void) sprintf (backup, "%s%c%s%s", CVSADM, DIRSEP, short_names ? CVSPREFIX_S : CVSPREFIX, file);
+  	if (isfile (file))
+  	    rename_file (file, backup);
+  	else
+***************
+*** 633,640 ****
+  	{
+  	    (void) fprintf (stderr, "===================================================================\n");
+  	    if (update_dir[0])
+! 		(void) fprintf (stderr, "Checking out %s/%s\n",
+! 				update_dir, file);
+  	    else
+  		(void) fprintf (stderr, "Checking out %s\n", file);
+  	    (void) fprintf (stderr, "RCS:  %s\n", vers_ts->srcfile->path);
+--- 633,640 ----
+  	{
+  	    (void) fprintf (stderr, "===================================================================\n");
+  	    if (update_dir[0])
+! 		(void) fprintf (stderr, "Checking out %s%c%s\n",
+! 				update_dir, DIRSEP, file);
+  	    else
+  		(void) fprintf (stderr, "Checking out %s\n", file);
+  	    (void) fprintf (stderr, "RCS:  %s\n", vers_ts->srcfile->path);
+***************
+*** 695,701 ****
+  	    if (!really_quiet)
+  	    {
+  		if (update_dir[0])
+! 		    (void) printf ("U %s/%s\n", update_dir, file);
+  		else
+  		    (void) printf ("U %s\n", file);
+  	    }
+--- 695,701 ----
+  	    if (!really_quiet)
+  	    {
+  		if (update_dir[0])
+! 		    (void) printf ("U %s%c%s\n", update_dir, DIRSEP, file);
+  		else
+  		    (void) printf ("U %s\n", file);
+  	    }
+***************
+*** 733,739 ****
+      if (!really_quiet)
+      {
+  	if (update_dir[0])
+! 	    (void) printf ("%c %s/%s\n", letter, update_dir, file);
+  	else
+  	    (void) printf ("%c %s\n", letter, file);
+      }
+--- 733,739 ----
+      if (!really_quiet)
+      {
+  	if (update_dir[0])
+! 	    (void) printf ("%c %s%c%s\n", letter, update_dir, DIRSEP, file);
+  	else
+  	    (void) printf ("%c %s\n", letter, file);
+      }
+***************
+*** 755,760 ****
+--- 755,761 ----
+      char backup[PATH_MAX];
+      int status;
+      int retcode = 0;
++     int omask;
+  
+      /*
+       * The users currently modified file is moved to a backup file name
+***************
+*** 763,774 ****
+       * is the version of the file that the user was most up-to-date with
+       * before the merge.
+       */
+!     (void) sprintf (backup, "%s%s.%s", BAKPREFIX, file, vers->vn_user);
+      if (update_dir[0])
+! 	(void) sprintf (user, "%s/%s", update_dir, file);
+      else
+  	(void) strcpy (user, file);
+- 
+      (void) unlink_file (backup);
+      copy_file (file, backup);
+      xchmod (file, 1);
+--- 764,780 ----
+       * is the version of the file that the user was most up-to-date with
+       * before the merge.
+       */
+!     if (short_names) {
+! 	omask = umask (2);
+!         mkdir (BAKPREFIX_S, 0777);
+! 	(void) umask ((int) omask);
+! 	(void) sprintf (backup, "%s%c%s", BAKPREFIX_S, DIRSEP, file);
+!     } else
+! 	(void) sprintf (backup, "%s%s.%s", BAKPREFIX, file, vers->vn_user);
+      if (update_dir[0])
+! 	(void) sprintf (user, "%s%c%s", update_dir, DIRSEP, file);
+      else
+  	(void) strcpy (user, file);
+      (void) unlink_file (backup);
+      copy_file (file, backup);
+      xchmod (file, 1);
+***************
+*** 850,855 ****
+--- 856,862 ----
+      char *rev, *baserev;
+      char *options;
+      int status;
++     int omask;
+  
+      /* determine if we need to do anything at all */
+      if (vers->vn_user == NULL || vers->srcfile == NULL ||
+***************
+*** 939,947 ****
+       * is the version of the file that the user was most up-to-date with
+       * before the merge.
+       */
+!     (void) sprintf (backup, "%s%s.%s", BAKPREFIX, file, vers->vn_user);
+      if (update_dir[0])
+! 	(void) sprintf (user, "%s/%s", update_dir, file);
+      else
+  	(void) strcpy (user, file);
+  
+--- 946,960 ----
+       * is the version of the file that the user was most up-to-date with
+       * before the merge.
+       */
+!     if (short_names) {
+! 	omask = umask (2);
+! 	mkdir (BAKPREFIX_S, 0777);
+! 	(void) umask ((int) omask);
+! 	(void) sprintf (backup, "%s%c%s", BAKPREFIX_S, DIRSEP, file);
+!     } else
+! 	(void) sprintf (backup, "%s%s.%s", BAKPREFIX, file, vers->vn_user);
+      if (update_dir[0])
+! 	(void) sprintf (user, "%s%c%s", update_dir, DIRSEP, file);
+      else
+  	(void) strcpy (user, file);
+  
+***************
+*** 1003,1009 ****
+      if (dirp == NULL)
+  	return;
+  
+!     ign_add_file (CVSDOTIGNORE, 1);
+      while ((dp = readdir (dirp)) != NULL)
+      {
+  	file = dp->d_name;
+--- 1016,1022 ----
+      if (dirp == NULL)
+  	return;
+  
+!     ign_add_file (short_names ? CVSDOTIGNORE_S : CVSDOTIGNORE, 1);
+      while ((dp = readdir (dirp)) != NULL)
+      {
+  	file = dp->d_name;

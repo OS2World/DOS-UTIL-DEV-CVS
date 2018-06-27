@@ -1,0 +1,185 @@
+.AUTODEPEND
+
+.PATH.obj = .
+
+CC = bcc +$(CONFIG)
+AS = tasm
+AR = tlib
+LD = tlink
+YACC = byacc
+
+#		*Implicit Rules*
+.c.obj:
+  $(CC) -c {$< }
+
+.cpp.obj:
+  $(CC) -c {$< }
+
+#		*List Macros*
+
+
+EXE_dependencies =  \
+ add.obj \
+ admin.obj \
+ checkin.obj \
+ checkout.obj \
+ classify.obj \
+ commit.obj \
+ diff.obj \
+ entries.obj \
+ hash.obj \
+ history.obj \
+ ignore.obj \
+ import.obj \
+ lock.obj \
+ log.obj \
+ logmsg.obj \
+ main.obj \
+ modules.obj \
+ myndbm.obj \
+ no_diff.obj \
+ patch.obj \
+ rcs.obj \
+ recurse.obj \
+ release.obj \
+ remove.obj \
+ repos.obj \
+ rtag.obj \
+ status.obj \
+ subr.obj \
+ tag.obj \
+ update.obj \
+ version.obj \
+ vers_ts.obj \
+ create_a.obj \
+ find_nam.obj \
+ parseinf.obj \
+ spawnvpq.obj \
+ $(CVSLIB) \
+ $(LIB)\wildargs.obj
+
+#		*Explicit Rules*
+cvs.exe: cvs
+  tdstrip cvs.exe
+
+cvs: $(CONFIG) $(EXE_dependencies)
+  $(LD) /x/c/P-/L$(LIB) @&&|
+c0l.obj+
+add.obj+
+admin.obj+
+checkin.obj+
+checkout.obj+
+classify.obj+
+commit.obj+
+diff.obj+
+entries.obj+
+hash.obj+
+history.obj+
+ignore.obj+
+import.obj+
+lock.obj+
+log.obj+
+logmsg.obj+
+main.obj+
+modules.obj+
+myndbm.obj+
+no_diff.obj+
+patch.obj+
+rcs.obj+
+recurse.obj+
+release.obj+
+remove.obj+
+repos.obj+
+rtag.obj+
+status.obj+
+subr.obj+
+tag.obj+
+update.obj+
+version.obj+
+vers_ts.obj+
+create_a.obj+
+find_nam.obj+
+parseinf.obj+
+spawnvpq.obj+
+$(LIB)\wildargs.obj
+cvs
+		# no map file
+$(CVSLIB)+
+emu.lib+
+mathl.lib+
+cl.lib
+|
+
+
+#		*Individual File Dependencies*
+add.obj: $(CONFIG) add.c
+
+admin.obj: $(CONFIG) admin.c
+
+checkin.obj: $(CONFIG) checkin.c
+
+checkout.obj: $(CONFIG) checkout.c
+
+classify.obj: $(CONFIG) classify.c
+
+commit.obj: $(CONFIG) commit.c
+
+diff.obj: $(CONFIG) diff.c
+
+entries.obj: $(CONFIG) entries.c
+
+hash.obj: $(CONFIG) hash.c
+
+history.obj: $(CONFIG) history.c
+
+ignore.obj: $(CONFIG) ignore.c
+
+import.obj: $(CONFIG) import.c
+
+lock.obj: $(CONFIG) lock.c
+
+log.obj: $(CONFIG) log.c
+
+logmsg.obj: $(CONFIG) logmsg.c
+
+main.obj: $(CONFIG) main.c
+
+modules.obj: $(CONFIG) modules.c
+
+myndbm.obj: $(CONFIG) myndbm.c
+
+no_diff.obj: $(CONFIG) no_diff.c
+
+patch.obj: $(CONFIG) patch.c
+
+rcs.obj: $(CONFIG) rcs.c
+
+recurse.obj: $(CONFIG) recurse.c
+
+release.obj: $(CONFIG) release.c
+
+remove.obj: $(CONFIG) remove.c
+
+repos.obj: $(CONFIG) repos.c
+
+rtag.obj: $(CONFIG) rtag.c
+
+status.obj: $(CONFIG) status.c
+
+subr.obj: $(CONFIG) subr.c
+
+tag.obj: $(CONFIG) tag.c
+
+update.obj: $(CONFIG) update.c
+
+version.obj: $(CONFIG) version.c
+
+vers_ts.obj: $(CONFIG) vers_ts.c
+
+create_a.obj: $(CONFIG) create_a.c
+
+find_nam.obj: $(CONFIG) find_nam.c
+
+parseinf.obj: $(CONFIG) parseinf.c
+
+spawnvpq.obj: $(CONFIG) spawnvpq.c

@@ -1,0 +1,98 @@
+.AUTODEPEND
+
+.PATH.obj = .
+
+CC = bcc +$(CONFIG)
+AS = tasm
+AR = tlib
+LD = tlink
+YACC = byacc
+
+#		*Implicit Rules*
+.c.obj:
+  $(CC) -c {$< }
+
+.cpp.obj:
+  $(CC) -c {$< }
+
+#		*List Macros*
+
+
+LIB_dependencies =  \
+ error.obj \
+ fnmatch.obj \
+ getdate.obj \
+ getopt.obj \
+ getopt1.obj \
+ getwd.obj \
+ getcwdsl.obj \
+ hostname.obj \
+ _mkdir.obj \
+ pipe.obj \
+ regex.obj \
+ sighandl.obj \
+ strippat.obj \
+ stripsla.obj \
+ yesno.obj \
+ swap.obj
+
+#		*Explicit Rules*
+libcvs.lib: $(CONFIG) $(LIB_dependencies)
+  $(AR) $<  @&&|
+-+error.obj &
+-+fnmatch.obj &
+-+getdate.obj &
+-+getopt.obj &
+-+getopt1.obj &
+-+getwd.obj &
+-+getcwdsl.obj &
+-+hostname.obj &
+-+_mkdir.obj &
+-+pipe.obj &
+-+regex.obj &
+-+sighandl.obj &
+-+strippat.obj &
+-+stripsla.obj &
+-+yesno.obj &
+-+swap.obj
+|
+
+
+#		*Individual File Dependencies*
+getdate.c: getdate.y
+    @echo expect 8 shift/reduce conflicts
+    $(YACC) getdate.y
+    copy y_tab.c getdate.c
+
+error.obj: $(CONFIG) error.c
+
+fnmatch.obj: $(CONFIG) fnmatch.c
+
+getdate.obj: $(CONFIG) getdate.c
+
+getopt.obj: $(CONFIG) getopt.c
+
+getopt1.obj: $(CONFIG) getopt1.c
+
+getwd.obj: $(CONFIG) getwd.c
+
+getcwdsl.obj: $(CONFIG) getcwdsl.c
+
+hostname.obj: $(CONFIG) hostname.c
+
+_mkdir.obj: $(CONFIG) _mkdir.c
+
+pipe.obj: $(CONFIG) pipe.c
+
+regex.obj: $(CONFIG) regex.c
+
+sighandl.obj: $(CONFIG) sighandl.c
+
+strippat.obj: $(CONFIG) strippat.c
+
+stripsla.obj: $(CONFIG) stripsla.c
+
+yesno.obj: $(CONFIG) yesno.c
+
+swap.obj: $(CONFIG) swap.asm
+    $(AS) /MX /M2 /O /D_large /JMASM51 SWAP.ASM,SWAP.OBJ

@@ -1,0 +1,46 @@
+# Makefile for GNU CVS program.
+# Do not use this makefile directly, but only from `../Makefile'.
+# Copyright (C) 1986, 1988-1990 Free Software Foundation, Inc.
+
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 2, or (at your option)
+# any later version.
+
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+
+# You should have received a copy of the GNU General Public License
+# along with this program; if not, write to the Free Software
+# Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+
+SOURCES = add.c admin.c checkin.c checkout.c classify.c commit.c \
+create_a.c diff.c entries.c find_nam.c hash.c history.c ignore.c \
+import.c lock.c log.c logmsg.c main.c myndbm.c rcs.c modules.c \
+no_diff.c parseinf.c patch.c recurse.c release.c remove.c repos.c rtag.c \
+status.c tag.c update.c vers_ts.c version.c subr.c
+
+OBJECTS = add$o admin$o checkin$o checkout$o classify$o commit$o \
+create_a$o diff$o entries$o find_nam$o hash$o history$o ignore$o \
+import$o lock$o log$o logmsg$o main$o myndbm$o rcs$o modules$o \
+no_diff$o parseinf$o patch$o recurse$o release$o remove$o repos$o rtag$o \
+status$o tag$o update$o vers_ts$o subr$o version$o
+
+HEADERS = config.h cvs.h rcs.h hash.h myndbm.h patchlevel.h
+
+PROGS = cvs
+
+all: $(PROGS)
+.PHONY: all
+
+# Linking rules.
+
+cvs: $(OBJECTS)
+    $(CC) $(LDFLAGS) -o $@.exe $(OBJECTS) ../lib/libcvs$a $(LIBS)
+
+# Compilation rules.
+
+$(OBJECTS): $(HEADERS)
+    $(CC) $(CFLAGS) -c $*.c

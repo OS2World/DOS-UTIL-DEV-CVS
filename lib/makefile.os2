@@ -1,0 +1,49 @@
+# Makefile for library files used by GNU CVS.
+# Copyright (C) 1986, 1988-1992 Free Software Foundation, Inc.
+
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 2, or (at your option)
+# any later version.
+
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+
+# You should have received a copy of the GNU General Public License
+# along with this program; if not, write to the Free Software
+# Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+
+SOURCES = argmatch.c \
+error.c getopt.c getopt1.c \
+sighandl.c \
+strippat.c stripsla.c yesno.c \
+getdate.y \
+hostname.c fnmatch.c _mkdir.c regex.c \
+getwdsl.c getwd.c
+
+OBJECTS = argmatch$o \
+error$o getopt$o getopt1$o \
+sighandl$o \
+strippat$o stripsla$o yesno$o \
+getdate$o \
+hostname$o fnmatch$o _mkdir$o regex$o \
+getcwdsl$o getwd$o
+
+libcvs$a: $(OBJECTS)
+	$(AR) cr $@ $(OBJECTS)
+	-$(RANLIB) $@
+
+getdate.c: getdate.y
+	@echo expect 8 shift/reduce conflicts
+	$(YACC) $(srcdir)/getdate.y
+	cp y.tab.c getdate.c
+
+fnmatch$o: fnmatch.h
+getopt1$o: getopt.h
+regex$o: regex.h
+getwd$o: system.h
+
+.c$o:
+	$(CC) $(CFLAGS) -c $*.c

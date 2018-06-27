@@ -1,0 +1,8 @@
+This version of CVS 1.3 has been adjusted to compile and run
+under OS/2 2.x and DOS. It supports the FAT file system as
+well as the HPFS. There are make files for both gcc/emx,
+being makefile.os2, and Borland C++ 3.x, being makefile.bor.
+
+Have fun,
+Erik van Linstee
+linstee@dutecaj.et.tudelft.nl

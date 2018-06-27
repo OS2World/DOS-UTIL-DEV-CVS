@@ -1,0 +1,60 @@
+.AUTODEPEND
+
+.PATH.obj = .
+
+#		*Translator Definitions*
+CONFIG = ..\cvs.cfg
+LIB = D:\LIB\BORLAND
+INC = D:\INC\BORLAND;..\LIB
+CVSLIB = ..\LIB\LIBCVS.LIB
+MAKE = makepas -fmakefile.bor
+
+MDEFINES = "-DLIB=$(LIB)" "-DCVSLIB=$(CVSLIB)" "-DCONFIG=$(CONFIG)"
+
+cvs: cvs.cfg
+    cd lib
+    $(MAKE) $(MDEFINES)
+    cd ..
+    cd src
+    $(MAKE) $(MDEFINES)
+    cd ..
+
+clean:
+   cd lib
+   del *.obj
+   del *.lib
+   del *.bak
+   del getdate.c
+   cd ..
+   cd src
+   del *.obj
+   del *.exe
+   del *.bak
+   cd ..
+
+#		*Compiler Configuration File*
+cvs.cfg: makefile.bor
+  copy &&|
+-ml
+-a
+-N
+-v
+-G
+-O
+-Og
+-Oe
+-Om
+-Ov
+-Ol
+-Ob
+-Op
+-Oi
+-Z
+-k-
+-d
+-vi
+-I$(INC)
+-L$(LIB)
+-DTZ_must_be_set=1;DOS;STDC_HEADERS;POSIX;DIRENT;LINK_MISSING;uid_t=long;gid_t=long;mode_t=long;off_t=long;ino_t=long;
+| cvs.cfg
+

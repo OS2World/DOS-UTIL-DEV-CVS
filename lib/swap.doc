@@ -1,0 +1,1690 @@
+
+
+
+
+
+
+
+
+
+
+
+                                  swap()
+
+
+                               Version 3.00
+                              October 4, 1990
+
+
+                            Copyright (C) 1990
+                           by Marty Del Vecchio
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+     This package (swap) includes an MS-DOS assembly-language routine that
+     can be called from a C program.  It will swap most of the current
+     program to extended memory (supplied by an XMS driver, such as
+     HIMEM.SYS), expanded memory (EMS version 4.0), or disk, thus freeing up
+     more memory for DOS.  It will then execute another program in its
+     place, and re-load the original program to its original state.  This
+     allows large DOS programs to execute other programs without the
+     original program taking up DOS memory.
+
+
+
+
+
+                             Table of Contents
+
+
+     I.   Introduction . . . . . . . . . . . . . . . . . . .  1
+
+     II.  File List  . . . . . . . . . . . . . . . . . . . .  2
+
+     III. Functional Description . . . . . . . . . . . . . .  3
+          A.   DOS Memory Management . . . . . . . . . . . .  3
+          B.   How swap() Works  . . . . . . . . . . . . . .  4
+          C.   Swapping to Different Media . . . . . . . . .  6
+               1.   Extended Memory  . . . . . . . . . . . .  7
+               2.   Expanded Memory  . . . . . . . . . . . .  8
+               3.   DOS Disk File  . . . . . . . . . . . . .  9
+
+     IV.  Calling the swap() Routine . . . . . . . . . . . . 11
+          A.   The swap() Return Code  . . . . . . . . . . . 11
+          B.   Program File to Execute . . . . . . . . . . . 12
+          C.   Program Command Line  . . . . . . . . . . . . 13
+          D.   EXEC Return Code Pointer  . . . . . . . . . . 13
+          E.   Swap File Name  . . . . . . . . . . . . . . . 15
+
+     V.   Customizing swap() . . . . . . . . . . . . . . . . 16
+          A.   Memory Model  . . . . . . . . . . . . . . . . 16
+          B.   Swap Locations  . . . . . . . . . . . . . . . 17
+          C.   Swap Order  . . . . . . . . . . . . . . . . . 17
+          D.   Fragmentation . . . . . . . . . . . . . . . . 18
+
+     VI.  Compiler-Specific Issues . . . . . . . . . . . . . 20
+          A.   Microsoft C 5.10  . . . . . . . . . . . . . . 20
+          B.   Microsoft C 6.00  . . . . . . . . . . . . . . 21
+          C.   Turbo C 2.0 . . . . . . . . . . . . . . . . . 21
+               1.   Command Line . . . . . . . . . . . . . . 21
+               2.   Integrated Environment . . . . . . . . . 23
+          D.   Turbo C++ 1.0 . . . . . . . . . . . . . . . . 23
+               1.   Command Line . . . . . . . . . . . . . . 23
+               2.   Integrated Environment . . . . . . . . . 24
+
+     VII. Revision History . . . . . . . . . . . . . . . . . 26
+
+     VIII. Information . . . . . . . . . . . . . . . . . . . 27
+
+
+
+
+I.   Introduction
+
+     Most DOS programmers have figured out how to load and execute another
+DOS program from inside their own program (using the DOS EXEC system call). 
+Almost invariably, they discover a rather large problem:  with their
+original program loaded in memory, there is little memory left over in which
+to run the child program.  Often, there is not enough memory to run even a
+DOS shell.
+
+     This package provides a solution to that problem.  The swap() routine
+will swap the original program to extended memory, expanded memory, or disk,
+then free up that memory.  It will then execute the DOS program specified by
+the caller.  When that program terminates, the original program is loaded
+back into memory, and it continues execution.
+
+     By default, the swap() routine will attempt to swap the current program
+to extended memory; if that fails, it will try expanded memory; if that
+fails, it will try a DOS disk file.  By re-assembling the routine in
+(SWAP.ASM), the programmer can specify which combination of the above media
+to attempt to swap to, and in which order the swapping shall be attempted. 
+Details are provided in Chapter V.
+
+     These routines have been tested with DOS versions 3.30 and 4.01.  They
+have been tested with Turbo C version 2.0, Turbo C++ version 1.0, Microsoft
+C version 5.10, and Microsoft C version 6.00.  Please see Chapter III, part
+B, for information about special problems with Microsoft C 6.00.
+
+     All of these compilers comply with the Microsoft DOS standard segment
+naming and ordering convention (called DOSSEG in MASM).  If your C compiler
+does not support this convention, please contact me:  these routines should
+be adaptable to any compiler.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+SWAP.DOC  Copyright (C) 1990 by Marty Del Vecchio                          1
+
+
+
+
+II.  File List
+
+     The following files should be found in this release:
+
+     SWAP.DOC       This file.  Documentation for use of the swap() routine.
+     SWAP.ASM       The assembly-language source file for the swap()
+                    routines.  Requires the Microsoft Macro Assembler
+                    version 5.10 or the Turbo Assembler 1.0 (or above).
+     SWAP.H         Header file for SWAP.ASM.  Contains function prototypes
+                    and constant definitions needed to use swap().
+
+     SWAPS.OBJ      swap() assembled (MASM 5.1) for Small memory model.
+     SWAPM.OBJ      swap() assembled (MASM 5.1) for Medium memory model.
+     SWAPC.OBJ      swap() assembled (MASM 5.1) for Compact memory model.
+     SWAPL.OBJ      swap() assembled (MASM 5.1) for Large memory model.
+
+     SWAPTEST.C     Sample program (Microsoft C 6.00) demonstrating use and
+                    features of swap().
+     SWAPTEST.MSC   Make file (Microsoft MAKE.EXE) for creating SWAPTEST.EXE
+                    in the large memory model, using Microsoft C 6.00.
+     SWAPTEST.OBJ   SWAPTEST.C compiled with Microsoft C 6.00, Large memory
+                    model.
+     SWAPTEST.EXE   Sample program compiled in the large memory model with
+                    Microsoft C 6.00 (SWAPTEST.OBJ, SWAPL.OBJ).
+
+     MSC.ZIP        Sample programs specific to Microsoft C compiler,
+                    version 5.10 and 6.00:
+                    SWAPTEST.C     Sample program source file
+                    SWAPTEST.MSC   Make file for SWAPTEST.EXE
+                                   (enter "make swaptest.msc")
+                    SWAP?.OBJ      SWAP.ASM assembled with MASM 5.1 for all
+                                   four memory models.
+
+     TC2.ZIP        Sample programs specific to Turbo C, version 2.0:
+                    SWAPTEST.C     Sample program source file
+                    SWAPTEST.TC2   Make file for SWAPTEST.EXE
+                                   (enter "make -fswaptest.tc2")
+                    SWAP?.OBJ      SWAP.ASM assembled with TASM 1.0 for all
+                                   four memory models.
+
+     TCP.ZIP        Sample programs specific to Turbo C++, version 1.0:
+                    SWAPTEST.C     Sample program source file
+                    SWAPTEST.TCP   Make file for SWAPTEST.EXE
+                                   (enter "make -fswaptest.tcp")
+                    SWAP?.OBJ      SWAP.ASM assembled with TASM 1.0 for all
+                                   four memory models.
+
+     WHATS.NEW      A short text file describing features added in this
+                    version of swap().
+
+
+
+
+
+SWAP.DOC  Copyright (C) 1990 by Marty Del Vecchio                          2
+
+
+
+
+III. Functional Description
+
+
+A.  DOS Memory Management
+
+     The functionality of swap() depends on the simplicity and
+predictability of the DOS memory management system.  The same system that
+was introduced in DOS version 1.0 in 1981 is still in use in DOS 4.01,
+released in 1989.
+
+     Basically, DOS has 640K of memory to manage:  the hex addresses from
+0000 to 9FFF (understanding DOS segments is not a requirement of this
+package!).  Once DOS is loaded, there is one large block of free memory.  In
+front of this block is a 16-byte header called a Memory Control Block (MCB),
+which contains information about the block such as how large it is.
+
+     Whenever a DOS program is loaded and executed, DOS allocates part of
+this block of memory and assigns it to the program.  The program's block of
+memory gets its own MCB, and the remaining memory gets another MCB.  DOS
+functions 48 hex (allocate memory block), 49 hex (free memory block), and 4A
+hex (change size of memory block) all affect the chain of memory blocks
+maintained by DOS.
+
+     Here is a map of what happens when FATHER.EXE, a mythical example
+program, is loaded into DOS and then executes a child program (CHILD.EXE):
+
+ Before executing CHILD         Address        While executing CHILD
++------------------------+       0000        +------------------------+
++                        +                    +                       +
++    Used by DOS, TSRs   +                   +    Used by DOS, TSRs   +
++------------------------+       2000        +------------------------+
++                        +                   +                        +
++    FATHER.EXE, the     +                   +      FATHER.EXE        +
++    current program     +                   +                        +
++------------------------+       4000        +------------------------+
++                        +                   +                        +
++    DOS Free Memory     +                   +    CHILD.EXE, the      +
++                        +                   +    current program     +
++                        +                   +                        +
++                        +       6000        +                        +
++                        +                   +                        +
++                        +                   +                        +
++                        +                   +                        +
++                        +                   +                        +
++                        +                   +------------------------+
++                        +                   +                        +
++                        +                   +    DOS Free Memory     +
++                        +                   +                        +
++                        +                   +                        +
++------------------------+       9FFF        +------------------------+
+
+
+
+
+SWAP.DOC  Copyright (C) 1990 by Marty Del Vecchio                          3
+
+
+
+
+
+     As you can see, when CHILD.EXE is executed, DOS splits up the large
+"DOS Free Memory" block into two smaller blocks--one used by CHILD, and the
+other still marked as free.  And notice that while CHILD is running, FATHER
+is still occupying a large block of DOS memory.  This puts a limit on the
+amount of memory available to CHILD.
+
+     In this picture, since there is free memory immediately after CHILD,
+CHILD can call DOS system function 4A hex to increase the size of its memory
+block.  A program can always decrease the size of its memory block, as long
+as it no longer accesses information outside of its block.  And finally, a
+program can call DOS system function 48 hex to allocate a new block of
+memory, if any DOS free memory exists.
+
+
+B.   How swap() Works
+
+     As stated above, DOS memory management is very predictable.  The swap()
+routine takes advantage of this predictability in the following manner. 
+Assume that the FATHER.EXE program above uses swap() to execute CHILD.EXE.
+
+     1)   swap() takes the contents of the memory block that FATHER occupies
+          and saves it outside of DOS memory (to extended memory, expanded
+          memory, or disk).  In addition, swap() saves the contents of
+          whatever other DOS memory blocks FATHER owns.
+
+     2)   swap() calls DOS system function 4A hex to shrink the size of
+          FATHER's memory block.  It makes this block as small as possible
+          while still keeping the swap() routine in memory.
+
+     3)   swap() calls DOS system function 4B hex to execute the CHILD.EXE
+          program (as specified by the caller).
+
+     4)   When CHILD.EXE terminates, swap() again calls DOS system function
+          4A hex, this time to restore FATHER's block to the same size it
+          was before swap() was called.  In addition, swap() calls DOS
+          function 48 hex to re-allocate the extra DOS memory blocks that
+          FATHER owned.
+
+     5)   Finally, swap() retrieves the original contents of FATHER's memory
+          blocks (saved in step 1) and restores the FATHER.EXE program to
+          its original state.
+
+     The key here is step 4.  We assume that the CHILD program is not a
+Terminate and Stay Resident (TSR) program, and that when it terminates, the
+memory it occupied is again free.  If this is the case, the DOS function 4A
+hex will predictably let us grow our memory block back to its original size,
+and DOS function 48 hex will predictably let us re-allocate whatever extra
+DOS memory blocks FATHER had allocated.
+
+
+
+
+
+SWAP.DOC  Copyright (C) 1990 by Marty Del Vecchio                          4
+
+
+
+
+     Following are maps of what happens in the above process:
+
+  Before FATHER       While CHILD is      After CHILD ends
+  executes CHILD      executing           and FATHER is restored
++-------------------+-------------------+-------------------+    0000
++  DOS, TSRs, etc.  +  DOS, TSRs, etc.  +  DOS, TSRs, etc.  +
++-------------------+-------------------+-------------------+    2000
++    FATHER.EXE     + FATHER (swap code)+    FATHER.EXE     +
++    (original      +-------------------+    (restored      +    3000
++      size)        +                   +    to original    +
++                   +     CHILD.EXE     +       size)       +
++                   +                   +                   +
++                   +                   +                   +
++-------------------+                   +-------------------+    6000
++                   +                   +                   +
++ DOS Free Memory   +                   + DOS Free Memory   +
++                   +                   +                   +
++                   +-------------------+                   +
++                   +                   +                   +
++                   + DOS Free Memory   +                   +
++                   +                   +                   +
++                   +                   +                   +
++                   +                   +                   +
++                   +                   +                   +
++                   +                   +                   +
++                   +                   +                   +
++-------------------+-------------------+-------------------+
+
+     There are several restrictions on use of the swap() routine, but the
+bottom line is that swap() lets you free all but about 2 kilobytes
+(depending on compiler, memory model, and swap() features) of your program's
+memory for use by another program.  Guidelines for using swap() are
+described in Chapter IV.
+
+     The swap() routine has been tested with and should work for all memory
+models with the following compilers:
+
+     Turbo C 2.0
+     Turbo C++ 1.0
+     Microsoft C 5.10
+     Microsoft C 6.00
+
+     With the exception of Microsoft C 6.00, the above compilers all produce
+DOS executable programs that use only one DOS memory allocation block. 
+Whenever the program needs more memory (for dynamic memory allocation, for
+example), the C library routines call DOS function 4A hex to expand the size
+of its block.
+
+     With Microsoft C version 6.00, however, things are not always as
+simple.  For the Small and Medium memory models, the above rule applies. 
+But for the Compact and Large memory models (with multiple data segments),
+Microsoft C 6.00 allocates extra DOS memory blocks with DOS function 48 hex. 
+
+
+SWAP.DOC  Copyright (C) 1990 by Marty Del Vecchio                          5
+
+
+
+
+These extra blocks are used for such things as holding a copy of the
+environment, the far heap (fmalloc()), and a buffer for printf.  In
+addition, if your program directly allocates DOS memory blocks
+(_dos_allocmem() in Microsoft C, allocmem() in Turbo C), you will face the
+same problem.
+
+     Starting with version 3.00, swap() will handle this type of DOS memory
+fragmentation, and will provide maximum available memory for the executed
+program.  The swap() routine accomplishes this by saving the contents of
+these extra blocks, then using DOS function 49 hex to free them.  When the
+child program is loaded and executed, all these free blocks are combined
+into one large block.  When the child program terminates, swap() resizes the
+main program block as usual, then re-allocates these extra blocks with DOS
+function 48 hex.  The swap() routine then restores the contents of these
+blocks.
+
+     Under almost all circumstances, this process works smoothly and
+reliably (again due to the predictability of the DOS memory management
+strategies).  However, under some circumstances, this procedure can fail,
+and the program cannot be re-loaded successfully.  When swap() allocates the
+blocks after the execution of the child program, the address returned by DOS
+must match EXACTLY the original address of the block.  In most cases, this
+occurs, and everything is fine.  However, if for some reason DOS returns a
+different address, the program restore fails.
+
+     As stated above, this is rare, but it can happen.  About the only way
+to force this to happen is to load several Terminate-and-Stay-Resident (TSR)
+programs, and then unload the first one, leaving a hole in the DOS memory
+chain.  When swap() calls DOS to allocate a block after the swap, DOS may
+see this hole and use it, instead of using the original address.  In this
+case, the program cannot be reloaded.  
+
+     To reiterate:  if you use Microsoft C 6.00 (Compact or Large model), or
+if your program allocates extra DOS memory blocks, then you need this
+fragmentation feature of swap().  There is an extra risk of your program not
+being re-loaded after execution of the child program, but this risk is very
+small.  As usual, it is up to you to decide whether to use this feature or
+not.  See Chapter V, Section D for details on how to enable and disable this
+feature.
+
+
+C.   Swapping to Different Media
+
+     The swap() routine can be configured to swap your program to extended
+memory, expanded memory, or disk.  This behavior can be customized, as
+discussed in Chapter V.  This section details how swap() deals with each
+media.
+
+
+
+
+
+
+
+SWAP.DOC  Copyright (C) 1990 by Marty Del Vecchio                          6
+
+
+
+
+1.   Extended Memory
+
+     Extended memory is a term used to describe memory available on 80286-
+and 80386-based personal computers that is not DOS memory.  On such a PC,
+the first megabyte of memory (0K to 1024K) is used for DOS memory, system
+BIOS, adapter BIOS and memory, etc.  Memory above 1024K is called extended
+memory.  It is generally not used by DOS, which is designed to run on the
+8086 processor, which can only address the first 1024K of memory.
+
+     Until recently, there had been no standard way of allocating,
+addressing, and using this memory.  Access to extended memory depended to
+some extent on a vendor's hardware design and BIOS implementation.  The main
+problem was ownership of this memory--there was no standard way that one
+program (such as a disk cache) could tell another program that it owned a
+block of extended memory.
+
+     Recently, however, the eXtended Memory Specification (XMS) was released
+by Microsoft and other companies.  The XMS spec described a driver that
+controlled all of extended memory, and defined a programming interface to
+that driver that applications could use to allocate, use, and free extended
+memory.  Microsoft ships such a driver (called HIMEM.SYS) with its Windows
+programs, and it is generally available on bulletin boards.
+
+     In order for swap() to use extended memory, HIMEM.SYS (or an
+equivalent) must be loaded.  If a system has extended memory, but is not
+running HIMEM.SYS, swap() will not be able to see the memory, and cannot use
+it.
+
+     When swap() tries to use XMS extended memory, it first checks to see if
+HIMEM.SYS (or an equivalent) is loaded.  It does this by calling the
+multiplex interrupt (2F hex) with 4300 hex in AX.  If HIMEM.SYS is loaded,
+it returns 80 hex in AL.
+
+     Once swap() confirms that HIMEM.SYS is loaded, it calculates how much
+extended memory it needs, and calls XMS function 09, allocate extended
+memory block.  If this call fails (there is not enough extended memory
+free), the swap to extended memory fails.  If the allocate call succeeds,
+swap() will call XMS function 0B hex, move extended memory block.  It sets
+up a request packet to copy the contents of the current program's DOS memory
+block (and the contents of that program's extra DOS blocks, if any) into the
+extended memory block it has just allocated.
+
+     The swap() routine will then shrink its program's DOS memory block (and
+free its extra DOS blocks), call the DOS EXEC function to execute the
+requested program, and restore the DOS memory block to its original size
+(and re-allocate the extra DOS blocks).  Details on this are found in
+Chapter III, Section A.
+
+     Once the executed program terminates, swap() again calls XMS function
+0B hex to copy the contents of the program from extended memory back into
+the DOS memory blocks.  Finally, XMS function 0A hex is called to free the
+allocated extended memory, and swap() returns to the caller.
+
+
+SWAP.DOC  Copyright (C) 1990 by Marty Del Vecchio                          7
+
+
+
+
+
+     At this point, the original program resides in DOS memory just as it
+did before the call to swap(), and swap() has completely cleaned up its
+usage of XMS extended memory.
+
+
+2.   Expanded Memory
+
+     Expanded memory is a special kind of memory that can be added to any
+PC, but that does not exist in the processor's address space.  Lotus, Intel,
+and Microsoft (LIM) defined a specification of how to provide expanded
+memory in a PC and how to access it from an application program.  The
+original specification was called LIM EMS 3.2, and it was updated to version
+4.0 later.  
+
+NOTE:     Previous versions of swap() (2.11 and before) were able to use EMS
+          version 3.2 or EMS version 4.0.  Due to the extra complications
+          encountered with Microsoft C 6.00 and multiple DOS memory blocks,
+          swap() version 3.00 and later cannot use EMS version 3.2.  This
+          version of swap() must have EMS version 4.0 in order to swap to
+          expanded memory.
+
+          If you have an expanded memory board (such as the Intel Above
+          Board or the AST Rampage Plus), and your EMS driver only supports
+          EMS version 3.2, please contact your card's manufacturer for an
+          updated EMS driver.  Almost every manufacturer has upgraded its
+          software by now to support EMS 4.0.
+
+     Expanded memory is provided in a system in 16-kilobyte (16K) blocks
+called pages.  An application can allocate and free any number of pages in
+units referred to by handles.  When the application wants to copy data to or
+from a page, it can either ask the EMS driver to map that page into the PC's
+address space and do a memory copy, or it can use EMS 4.0 function 57 hex to
+perform the memory copy.  Swap() version 3.00 and later use this latter
+method of transferring data to and from expanded memory, and thus must have
+an EMS 4.0 driver.
+
+     When swap() tries to use EMS memory, it first checks to see if an EMS
+driver is loaded.  It does this by looking at interrupt vector 67 hex.  The
+string "EMM0XXXX" should be found 13 bytes after that vector address.  If it
+is, an EMS driver is loaded.
+
+     Once swap() confirms that an EMS driver is loaded, it calculates how
+many 16K expanded memory pages it needs, and calls EMS function 43 hex,
+"allocate expanded memory pages."  If this call fails (there is not enough
+expanded memory free), the swap to expanded memory fails.
+
+     If this call succeeds, swap() will copy the contents of the current
+program memory block (and its extra DOS blocks) to the expanded memory using
+EMS 4.0 function 57 hex, "move memory region".  The EMS driver will perform
+the actual transfer of data from DOS memory to expanded memory.
+
+
+
+SWAP.DOC  Copyright (C) 1990 by Marty Del Vecchio                          8
+
+
+
+
+     The swap() routine will then shrink its program's DOS memory block (and
+free its extra DOS blocks), call the DOS EXEC function to execute the
+requested program, and restore the DOS memory block to its original size
+(and re-allocate the extra DOS blocks).  Details on this are found in
+Chapter III, Section A.
+
+     Once the executed program terminates, swap() again calls EMS function
+57 hex to copy the data from expanded memory back to its original location. 
+Finally, EMS function 45 hex is called to free the allocated expanded
+memory, and swap() returns to the caller.
+
+     At this point, the original program resides in DOS memory just as it
+did before the call to swap(), and swap() has completely cleaned up its
+usage of EMS expanded memory.
+
+
+3.   DOS Disk File
+
+     The swap() routine can also use the DOS file system to temporarily save
+the contents of a program.  Although swapping to a disk file is much slower
+than swapping to extended or expanded memory, it is just as effective.
+
+     The name of the disk file to swap to is provided by the caller as a
+parameter (see Chapter IV).  The swap() routine will call DOS function 3C
+hex to create the file (or truncate it if it already exists).  The file will
+be hidden to provide a small amount of protection for the file.  If this
+create fails, the swap to disk fails.
+
+     Once the file is created, the swap() routine follows a procedure
+similar to the one outlined above in the description for swapping to EMS. 
+The original program will be swapped in 32K blocks to the disk file, with
+the data being written with DOS function 40 hex.  If any call to this
+function fails, it most likely means that the disk is full.  If this
+happens, swap() will delete the file, and the swap to disk fails. 
+Otherwise, swap() will continue to write 32K blocks until the entire program
+is saved.
+
+     The swap() routine will then shrink its program's DOS memory block (and
+free its extra DOS blocks), call the DOS EXEC function to execute the
+requested program, and restore the DOS memory block to its original size
+(and re-allocate the extra DOS blocks).  Details on this are found in
+Chapter III, Section A.
+
+     When the executed program terminates, swap() will call DOS function 3D
+hex to open the swap file.  If the file is not there, swap() cannot restore
+the original program.  If this is the case, swap() will print an error
+message to the screen and terminate the program.
+
+     If the file is there, swap() will simply read 32K chunks from the disk
+file into the DOS memory block using DOS function 3F hex.  It will do this
+until the entire contents of the original program are restored.  It will
+then call DOS function 41 hex to delete the swap file.
+
+
+SWAP.DOC  Copyright (C) 1990 by Marty Del Vecchio                          9
+
+
+
+
+
+     At this point, the original program resides in DOS memory just as it
+did before the call to swap(), and swap() has completely cleaned up its
+usage of DOS file system.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+SWAP.DOC  Copyright (C) 1990 by Marty Del Vecchio                         10
+
+
+
+
+IV.  Calling the swap() Routine
+
+     The swap() routine is designed to be called in a C program.  This is
+the function prototype for swap():
+
+     int swap (char *program_name, 
+               char *command_line, 
+               char *exec_return, 
+               char *swap_fname);
+
+     For example, to execute a DOS command shell and display a directory of
+the C: drive, you would call swap() this way:
+
+swap_ret = swap ("C:\\COMMAND.COM", "/C dir c:", &exec_ret, "swap.fil");
+
+     When building a program with swap(), you should put the swap() object
+module as early in the linker list as possible.  See Chapter VI for detailed
+information on using swap() with various compiler versions.
+
+     The swap() routine also returns an int return code to the caller. 
+Following are descriptions for this return code and each of these
+parameters.
+
+
+A.   The swap() Return Code
+
+     The swap() function returns an integer signifying the success or
+failure of the swap and execute.  There are four possible return codes,
+defined in SWAP.H and here:
+
+0:   SWAP_OK             Success--current program swapped, new program
+                         executed, and original program restored.
+1:   SWAP_NO_SHRINK      Unable to shrink DOS memory block size.  This
+                         indicates an error in the DOS Memory Control Block
+                         chain.  This is unlikely.
+2:   SWAP_NO_SAVE        Unable to save the program to any one of extended
+                         memory, expanded memory, or disk (depending on
+                         which functions were assembled).  The new program
+                         was not executed.
+3:   SWAP_NO_EXEC        Unable to execute the new program.  If swap()
+                         returns this code, the parameter exec_return (see
+                         below) contains the DOS error code.
+
+     In addition to these return codes, there is another type of error that
+can occur in swap() that cannot be returned to the caller.  If swap() is
+unable to restore the original program after calling the DOS EXEC function,
+it cannot return to the caller, because the caller no longer exists in DOS
+memory!
+
+     This error can occur for various reasons.  If the program was swapped
+to disk, and the disk file was erased by the executed program, swap() has
+
+
+
+SWAP.DOC  Copyright (C) 1990 by Marty Del Vecchio                         11
+
+
+
+
+nothing to restore.  In addition, errors encountered in the XMS or EMS
+driver can cause this.
+
+     If this happens, swap() takes the only recourse it can.  It prints the
+following message to the screen (the standard error location):
+
+     SWAP:  Unable to restore program.
+
+It then calls the DOS terminate function (4C hex) and returns 255 (FF hex)
+as the return code.  This code can be queried using the DOS ERRORLEVEL
+function.  For example, take this batch file:
+
+Echo About to execute program that demonstrates swap():
+swaptest
+if errorlevel 255 echo ERROR--swap() was unable to restore program!
+
+
+B.   Program File to Execute
+
+     The first parameter, program_name, is a pointer to a null-terminated
+string that contains the full path and file name of the program to be
+executed.  For example, if you wanted to execute a program called TEST.EXE
+which is located in C:\UTIL, you must call swap() this way:
+
+swap_ret = swap ("C:\\UTIL\\TEST.EXE", "", &exec_ret, "swap.fil");
+
+     The swap() routine will NOT perform any of the following functions:
+
+     --   Search the DOS PATH environment variable for a program to execute
+     --   Redirect input or output with "<" or ">"
+     --   Execute a batch file
+
+These functions cannot be performed by swap() because they are functions of
+the DOS command processor (COMMAND.COM), and not of the DOS EXEC function
+that swap() uses.  In order to do any of these things, you must explicitly
+invoke the command processor with the "/C" parameter, which tells
+COMMAND.COM to execute the following command.  For example, to execute a DIR
+command and redirect the output to "DIR.OUT", you would call swap() this
+way:
+
+char *comspec;
+comspec = getenv ("COMSPEC");
+swap_ret = swap (comspec, "/C dir >dir.out", &exec_ret, "swap.fil");
+
+     The getenv() function is available in Turbo C and Microsoft C to search
+the current environment for a string.  We use it here to determine where the
+DOS command processor is.
+
+     When passing the program name parameter to swap(), remember that the
+"\" character, used by DOS as a directory and file name separator, is used
+by C to indicate an escape character.  Thus, to specify the file
+C:\UTIL\TEST.EXE, you must pass it as "C:\\UTIL\\TEST.EXE".
+
+
+SWAP.DOC  Copyright (C) 1990 by Marty Del Vecchio                         12
+
+
+
+
+
+     The program to be executed MUST NOT be a Terminate and Stay Resident
+(TSR) program.  If it is, swap() will not be able to grow the original
+program's DOS memory block back to its original size, and thus the original
+program cannot be re-loaded.
+
+     Finally, remember that the name of the program file to be executed can
+be up to 127 characters (not including the null byte) long.  It is the
+responsibility of the caller to ensure that the file name is not longer than
+127 characters.
+
+
+C.   Program Command Line
+
+     The second parameter passed to swap() is the command line for the
+program to be run.  It is a pointer to a null-terminated string that can be
+between 0 and 127 characters (not including the null byte).  This string
+should NOT include the name of the program to be executed--that should be
+passed as a separate parameter as described above.
+
+     For example, to call PKZIP.EXE and have it store files in TEST.ZIP, you
+would call swap() this way:
+
+swap_ret = swap ("C:\\UTIL\\PKZIP.EXE", "-r -P test.zip *.*",
+                 &exec_ret, "swap.fil");
+
+     It is the responsibility of the caller to ensure that the command line
+parameter string is not longer than 127 characters.
+
+     In version 2.10 of swap(), code was added to parse the command line
+into two File Control Blocks (FCBs), which are then passed to the executed
+program.  This more closely emulates the way COMMAND.COM loads and executes
+a program.  This behavior has no effect on the contents of the command line.
+
+     This code was added because some programs (such as DOS' CHKDSK.COM)
+assume that the first two command-line parameters will be parsed into the
+FCBs, and they use them.  If you tried to execute CHKDSK.COM with a version
+of swap() earlier than 2.10, CHKDSK would report "invalid drive".  This is
+because the command line parameter had not been parsed into the FCB.
+
+     Code to parse the command line parameters into default FCBs was written
+and generously provided by David E. Jenkins.
+
+
+D.   EXEC Return Code Pointer
+
+     The exec_return is a pointer to a char (8-bit value) where swap() will
+return information from the DOS EXEC function.  What is stored in this
+location depends on whether the swap() routine was successful or not.
+
+     If swap() is successful (and returns 0, SWAP_OK described above),
+exec_return contains the return code of the executed program.  This is the
+
+
+SWAP.DOC  Copyright (C) 1990 by Marty Del Vecchio                         13
+
+
+
+
+same value used in the DOS ERRORLEVEL comparison.  For example, if you
+execute PKUNZIP.EXE, and it gives the return code 0, meaning success, the
+byte pointed to by exec_return will be set to 0 by swap().
+
+     If swap() is unsuccessful when trying to execute the new program (and
+returns 3, SWAP_NO_EXEC), swap() will place the DOS error code returned by
+EXEC in this value.  According to the DOS technical reference manual, this
+code will be one of the following (as defined in SWAP.H):
+
+0x01: BAD_FUNC           Bad DOS function number--unlikely
+0x02: FILE_NOT_FOUND     File not found--couldn't find program_name
+0x05: ACCESS_DENIED      Access denied--couldn't open program_name 
+0x08: NO_MEMORY          Insufficient memory to run program_name
+0x0A: BAD_ENVIRON        Invalid environment segment--unlikely  
+0x0B: BAD_FORMAT         Format invalid--unlikely
+
+     Here is an example of how to handle error codes:
+
+char swap_ret, exec_ret;
+
+swap_ret = swap ("C:\\UTIL\\PKUNZIP.EXE", "D:TEST.ZIP",
+                 &exec_ret, "swap.fil");
+
+switch (swap_ret)
+   {
+   case SWAP_OK:         printf ("Successful, program returned %d.",
+                                 (int)exec_ret);
+                         break;
+   case SWAP_NO_SHRINK:  printf ("Unable to shrink DOS memory block.");
+                         break;
+   case SWAP_NO_SAVE:    printf ("Unable to save program.");
+                         break;
+   case SWAP_NO_EXEC:    printf ("EXEC call failed.  DOS error is: ");
+                         switch (exec_ret)
+                            {
+                            case BAD_FUNC:
+                                   printf ("Bad function.\n");   break;
+                            case FILE_NOT_FOUND:
+                                   printf ("File not found.\n"); break;
+                            case ACCESS_DENIED:
+                                   printf ("Access denied.\n");  break;
+                            case NO_MEMORY:
+                                   printf ("Insufficient memory.\n"); break;
+                            case BAD_ENVIRON:
+                                   printf ("Bad environment.\n"); break;
+                            case BAD_FORMAT:
+                                   printf ("Bad format.\n");      break;
+                            }
+                         break;
+   }
+
+
+
+
+SWAP.DOC  Copyright (C) 1990 by Marty Del Vecchio                         14
+
+
+
+
+E.   Swap File Name
+
+     The final parameter, swap_fname, is a pointer to a null-terminated
+string that contains the name of a DOS file to swap the program to.  This is
+only needed if the version of swap() you are using will try to swap to disk
+(see Chapter V).  If your version of swap() does not swap to disk at all,
+you can pass the null string ("").  This parameter will only be used if
+swap() actually does try to swap to disk.
+
+     This file name need not be a complete drive, directory, and path name. 
+If the drive is not specified, it will be placed on the current drive; if
+the directory is not specified, it will be placed in the current directory.
+
+     It is up to the caller to choose a safe file name for swapping.  You
+should not choose the name of a file that already exists, as that file's
+contents will be lost when swap() truncates it.  Because of this, you should
+be very careful not to specify the same file name for two different programs
+that use swap().
+
+     For example, if you have a program called A.EXE which uses swap to call
+program B.EXE, which uses swap() to call program C.EXE, you must choose
+different swap file names.  If you use the same name (such as
+"C:\\SWAP.FIL") for both, you will have a problem.  When A.EXE executes
+B.EXE, c:\swap.fil will be created, and will contain the contents of A.EXE. 
+When B.EXE executes C.EXE and swaps to c:\swap.fil, the original contents of
+the file will be erased and replaced with the contents of B.EXE.  When C.EXE
+terminates, c:\swap.fil will be read and deleted.  Then when B.EXE
+terminates, the swap() routine in A.EXE will not find c:\swap.fil, and
+cannot reload A.EXE.
+
+Note:     Swap() is unable to swap a program to a file that is located on a
+          Novell Netware file server.  Swap() will work with most networks
+          (such as Microsoft LAN Manager, Network OS, etc.) that use the
+          standard Microsoft Redirector.  This is because swap() uses DOS
+          function 60 hex (somewhat undocumented) to generate a full drive,
+          path, and file name of the swap file.  Microsoft Redirector
+          networks are supported by this DOS function, but Novell Netware is
+          not.  However, swap() can always save the program to a file
+          located on a local disk, even if that PC is running Novell
+          Netware.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+SWAP.DOC  Copyright (C) 1990 by Marty Del Vecchio                         15
+
+
+
+
+V.   Customizing swap()
+
+
+     As stated above, the default configuration for swap() is a Small memory
+model function that attempts to swap the main program block AND whatever
+extra DOS memory blocks the program has allocated, in the following order:
+
+     1)   XMS extended memory
+     2)   EMS expanded memory
+     3)   DOS disk file
+
+You can use the included source file (SWAP.ASM) and the Microsoft Macro
+Assembler (MASM) version 5.10 or the Turbo Assembler (TASM) version 1.0 or
+later to create a customized version of the swap() routine.  To assemble the
+default version of swap(), you would execute MASM this way:
+
+     masm swap /mx;
+
+If you are using TASM, you must instruct it to emulate MASM:
+
+     tasm swap /mx /JMASM51;
+
+This will create SWAP.OBJ.  You must include "/mx" on the MASM command line
+to tell the assembler to maintain the case of all variables and functions
+declared there.  This allows the C program to access these items.
+
+     This chapter describes how to create a customized version of swap().
+
+
+A.   Memory Model
+
+     The swap() routine supports four different C memory models, as defined
+by Microsoft C and Turbo C.  The memory model specifies the number of
+segments for code and data, and therefore the size of a code or data
+pointer.  These memory models are:
+
+     Small     One code segment, one data segment
+     Medium    Multiple code segments, one data segment
+     Compact   One code segment, multiple data segments
+     Large     Multiple code segments, multiple data segments
+
+     The swap() source file (SWAP.ASM) can be configured to support any of
+these memory models with a command-line parameter to MASM.  The parameter is
+"/D" followed by one of the following definitions:
+
+     _small         Small memory model
+     _medium        Medium memory model
+     _compact       Compact memory model
+     _large         Large memory model
+
+     Please note that these definitions have changed from earlier versions
+of swap().  Earlier versions (2.01 and earlier) did not have the underscore
+
+
+SWAP.DOC  Copyright (C) 1990 by Marty Del Vecchio                         16
+
+
+
+
+before the name.  This caused problems with Turbo Assembler, which uses
+those definitions for other purposes.  With these new definitions, you can
+use Turbo Assembler to assemble SWAP.ASM.  To do this, you must tell TASM to
+emulate the Microsoft Assembler (with /JMASM51, as described above).
+
+     For example, to create a Large-model version of swap() with TASM, you
+would assemble SWAP.ASM this way:
+
+     tasm swap /D_Large /JMASM51;
+
+This will create SWAP.OBJ that supports the Large memory model.  Case does
+not matter when specifying the memory model.  If no model is specified, the
+Small model is assumed.
+
+     In addition to the above memory models, the Huge model should also be
+supported by assembling swap() for the Large model.  I have done cursory
+tests for this case, but success is by no means guaranteed.
+
+
+B.   Swap Locations
+
+     The swap() routine will swap a program to extended memory, expanded
+memory, or disk file.  If you do not want swap() to swap to all of these
+locations, you can re-assemble a custom version.  However, it is more
+flexible to allow swap() to try all three locations, and the extra code
+needed is minimal (about 1700 bytes total).
+
+     This is also accomplished with the "/D" switch to MASM, followed by one
+of the following:  "xms" for extended memory, "ems" for expanded memory, and
+"disk" for disk file.  For example, to assemble a version of swap() that
+only attempts to swap to extended memory, you would say:
+
+     masm swap /Dxms;
+
+To assemble a version of swap() that attempts to swap to extended or
+expanded memory, you would say:
+
+     masm swap /Dxms /Dems;
+
+
+C.   Swap Order
+
+     By default, swap() attempts to swap the original program to extended
+memory;  if that fails, to expanded memory;  and if that fails, to disk. 
+Naturally, it will only try each location if that location was specified
+during assembly of SWAP.ASM (see Section B above).
+
+     If you want to change the order in which swap() attempts to save the
+program, you must change the source file SWAP.ASM manually.  Towards the end
+of the file, there is a routine called save_program.  It contains three
+blocks of code:
+
+
+
+SWAP.DOC  Copyright (C) 1990 by Marty Del Vecchio                         17
+
+
+
+
+; ********************************************************************
+IFDEF USE_XMS
+IF1
+   %out -- XMS extended memory
+ENDIF
+                call    save_xms  ; Try saving to XMS extended memory
+                jnc     save_ok   ; Carry clear == success, all done
+ENDIF
+; ********************************************************************
+
+
+; ********************************************************************
+IFDEF USE_EMS
+IF1
+   %out -- EMS expanded memory
+ENDIF
+                call    save_ems  ; Try saving to EMS expanded memory
+                jnc     save_ok   ; Carry clear == success, all done
+ENDIF
+; ********************************************************************
+
+
+; ********************************************************************
+IFDEF USE_DISK
+IF1
+   %out -- DOS disk file
+ENDIF
+                call    save_disk ; Try saving to DOS disk file
+                jnc     save_ok   ; Carry clear == success, all done
+ENDIF
+; ********************************************************************
+
+     These blocks are separated by lines of asterisks.  If you wanted swap()
+to try expanded memory, then extended memory, then disk, you would move the
+middle block (IFDEF USE_EMS to ENDIF) before the middle block.  This is
+easily accomplished with most text editors.  
+
+
+D.   Fragmentation
+
+     Starting with swap() version 3.00, fragmented DOS memory allocation is
+handled.  See Chapter III, Section D for information on this problem.
+
+     By default, swap() supports swapping of multiple DOS blocks.  If you
+want to disable this feature, you must add the parameter NoFrag to your MASM
+or TASM command line.  For example, to disable fragmentation support when
+building a large-model version of swap(), you would enter:
+
+     tasm /D_Large /JMASM51 /mx /DNoFrag swap.asm, swapl.obj;
+
+     Although disabling this feature saves some memory, the amount saved
+(less than 100 bytes) is not really worth the price of possible memory
+
+
+SWAP.DOC  Copyright (C) 1990 by Marty Del Vecchio                         18
+
+
+
+
+shortages.  However, the option is included to allow the programmer complete
+control over the swap() routine.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+SWAP.DOC  Copyright (C) 1990 by Marty Del Vecchio                         19
+
+
+
+
+VI.  Compiler-Specific Issues
+
+     The source file for the swap() routine, SWAP.ASM, supports the four
+major memory models (Small, Medium, Compact, and Large) of the following
+compilers:
+
+     Microsoft C 5.10
+     Microsoft C 6.00
+     Turbo C 2.0
+     Turbo C++ 1.0
+
+     This chapter provides information on optimizing swap() for use with
+each memory model of each compiler.
+
+     The basic guideline for linking swap() into your executable is this: 
+link the swap() object module (SWAPS.OBJ, etc.) into your executable as
+early as possible.  Swap() can only swap out the modules that follow it in
+the executable, so putting it as early as possible allows for maximum memory
+for the executed program.  The following sections provide specific
+information for each compiler.
+
+
+A.   Microsoft C 5.10
+
+     The file MSC.ZIP, included in this distribution, contains example files
+for building SWAPTEST.EXE with Microsoft C 5.10 and 6.00 (using MASM 5.10). 
+A make file called SWAPTEST.MSC is included that automates the process of
+building SWAPTEST.EXE.  To make SWAPTEST.EXE, enter the following at the DOS
+command prompt:
+
+     make swaptest.msc
+
+Following is a list of issues with Microsoft C 5.10:
+
+     1.   Make sure the .CODE declaration in SWAP.ASM looks like this:
+
+          IF @codesize
+          .CODE   SWAP_TEXT
+          ELSE
+          .CODE
+          ENDIF
+
+     2.   Make sure the object file that contains swap() is listed as the
+          first object file when linking your executable:
+
+          link $(LINKDEFS) swapl + swaptest, swaptest, swaptest;
+
+          This ensures that your executable will take up as little memory as
+          possible when it is executing a child program using swap().
+
+     3.   Unless your program directly allocates extra DOS memory blocks
+          (either by calling DOS function 48 hex or by calling
+
+
+SWAP.DOC  Copyright (C) 1990 by Marty Del Vecchio                         20
+
+
+
+
+          _dos_allocmem()), you can get by without using the fragmentation
+          feature of swap() ("/DNoFrag").  However, the memory savings will
+          be minimal, and this is not recommended.
+
+
+B.   Microsoft C 6.00
+
+     The file MSC.ZIP, included in this distribution, contains example files
+for building SWAPTEST.EXE with Microsoft C 5.10 and 6.00 (using MASM 5.10). 
+A make file called SWAPTEST.MSC is included that automates the process of
+building SWAPTEST.EXE.  To make SWAPTEST.EXE, enter the following at the DOS
+command prompt:
+
+     make swaptest.msc
+
+Following is a list of issues with Microsoft C 6.00:
+
+     1.   Make sure the .CODE declaration in SWAP.ASM looks like this:
+
+          IF @codesize
+          .CODE   SWAP_TEXT
+          ELSE
+          .CODE
+          ENDIF
+
+     2.   Make sure the object file that contains swap() is listed as the
+          first object file when linking your executable:
+
+          link $(LINKDEFS) swapl + swaptest, swaptest, swaptest;
+
+          This ensures that your executable will take up as little memory as
+          possible when it is executing a child program using swap().
+
+     3.   If you are using the Compact or Large memory model, you must use
+          the fragmentation feature of swap() in order to provide maximum
+          memory for the executed program.  If you specify "/DNoFrag" on the
+          MASM command line, you disable this feature, and your child
+          program will not have as much memory as it could.
+
+
+C.   Turbo C 2.0
+
+     Turbo C 2.0 provides two ways to build an executable program:  a
+command-line environment (using TCC.EXE and TLINK.EXE), and an integrated
+development environment.
+
+     The file TC2.ZIP, included in this distribution, contains example files
+for building SWAPTEST.EXE with Turbo C 2.0, both command-line and integrated
+environments.
+
+
+1.   Command Line
+
+
+SWAP.DOC  Copyright (C) 1990 by Marty Del Vecchio                         21
+
+
+
+
+
+     You can build SWAPTEST.EXE with TCC.EXE (Turbo C 2.0), TASM.EXE (Turbo
+Assembler 1.0), TLINK.EXE (Turbo Linker 2.0), and MAKE.EXE (Turbo Make 2.0). 
+A make file called SWAPTEST.TC2 is included to automate the process of
+building SWAPTEST.EXE.  To do this, enter the following at the DOS command
+prompt:
+
+     make -fswaptest.tc2
+
+Following is a list of issues with Turbo C 2.0 command line:
+
+     1.   Make sure the .CODE declaration in SWAP.ASM looks like this:
+
+          IF @codesize
+          .CODE   _TEXT
+          ELSE
+          .CODE
+          ENDIF
+
+     2.   With the Turbo Linker (TLINK.EXE), you must explicitly list all
+          object modules, including the C startup code (c0?.obj).  In the
+          Small and Medium models, you must list the startup module before
+          the swap module.  For example, to create a small-model version of
+          SWAPTEST.EXE, you would use this TLINK.EXE command line:
+
+          tlink c:\lib\c0s swaps swaptest, swaptest, swaptest,
+               c:\lib\cs.lib
+
+          If you specify swaps before c:\lib\c0s, the Turbo Linker gets
+          confused, and generates an executable file that will always report
+          "Null Pointer Assignment" at program termination.  A null pointer
+          assignment has not necessarily occurred, but the message will be
+          printed anyway.
+
+          With the Medium and Large models, it is OK to list the swap()
+          object module first:
+
+          tlink swapl c:\lib\c0l swaptest, swaptest, swaptest,
+               c:\lib\cl.lib
+
+          This will generate no spurious "Null Pointer Assignment" messages.
+
+     3.   Unless your program directly allocates extra DOS memory blocks
+          (either by calling DOS function 48 hex or by calling allocmem()),
+          you can get by without using the fragmentation feature of swap()
+          ("/DNoFrag").  However, the memory savings will be minimal, and
+          this is not recommended.
+
+
+
+
+
+
+
+SWAP.DOC  Copyright (C) 1990 by Marty Del Vecchio                         22
+
+
+
+
+2.   Integrated Environment
+
+Following is a list of issues with Turbo C 2.0 integrated environment:
+
+     1.   Make sure the .CODE declaration in SWAP.ASM looks like this:
+
+          IF @codesize
+          .CODE   _TEXT
+          ELSE
+          .CODE
+          ENDIF
+
+     2.   In the Integrated Development Environment (IDE) of Turbo C 2.0,
+          you use project files (*.PRJ) to specify the source files and
+          object modules used to build an executable program.  You should
+          always list the swap() object module on the first line of this
+          file:
+
+               swaps.obj
+               swaptest.c (swap.h)
+
+          This is demonstrated in the file SWAPTEST.PRJ included in the file
+          TC2.ZIP.
+
+     3.   Unless your program directly allocates extra DOS memory blocks
+          (either by calling DOS function 48 hex or by calling allocmem()),
+          you can get by without using the fragmentation feature of swap()
+          ("/DNoFrag").  However, the memory savings will be minimal, and
+          this is not recommended.
+
+
+D.   Turbo C++ 1.0
+
+     Turbo C++ 1.0 provides two ways to build an executable program:  a
+command-line environment (using TCC.EXE and TLINK.EXE), and an integrated
+development environment.
+
+     The file TCP.ZIP, included in this distribution, contains example files
+for building SWAPTEST.EXE with Turbo C++ 1.0, both command-line and
+integrated environments.
+
+
+1.   Command Line
+
+     You can build SWAPTEST.EXE with TCC.EXE (Turbo C++ 1.0), TASM.EXE
+(Turbo Assembler 2.0), TLINK.EXE (Turbo Linker 3.0), and MAKE.EXE (Turbo
+Make 3.0).  A make file called SWAPTEST.TCP is included to automate the
+process of building SWAPTEST.EXE.  To do this, enter the following at the
+DOS command prompt:
+
+     make -fswaptest.tcp
+
+
+
+SWAP.DOC  Copyright (C) 1990 by Marty Del Vecchio                         23
+
+
+
+
+Following is a list of issues with Turbo C++ 1.0 command line:
+
+     1.   Make sure the .CODE declaration in SWAP.ASM looks like this:
+
+          IF @codesize
+          .CODE   _TEXT
+          ELSE
+          .CODE
+          ENDIF
+
+     2.   With the Turbo Linker (TLINK.EXE), you must explicitly list all
+          object modules, including the C startup code (c0?.obj).  In all
+          memory models in Turbo C++ 1.0, you can provide maximum memory for
+          the executed program by listing the swap() object module first on
+          the Turbo Link command line.  For example, to create a small-model
+          version of SWAPTEST.EXE, you would use this TLINK.EXE command
+          line:
+
+          tlink swaps c:\lib\c0s swaptest, swaptest, swaptest,
+               c:\lib\cs.lib
+
+          Turbo C++ 1.0 does not exhibit the "Null Pointer Assignment"
+          problems of Turbo C 2.0 listed above.
+
+     3.   Unless your program directly allocates extra DOS memory blocks
+          (either by calling DOS function 48 hex or by calling allocmem()),
+          you can get by without using the fragmentation feature of swap()
+          ("/DNoFrag").  However, the memory savings will be minimal, and
+          this is not recommended.
+
+     4.   If you are using Turbo C++ to compile a C++ program, you must take
+          extra steps to ensure that swap() is linked into your executable
+          successfully.  This is due to the type-safe linkage feature of
+          Turbo C++ 1.0.  Turbo C++ 1.0 adds characters to the names of C
+          functions it compiles to allow the linker to check the types of
+          parameters being passed to it (swap() becomes @swap$qnuct1t1t1()).
+
+          Because swap() is assembled by the Turbo Assembler, and not
+          compiled by Turbo C++, you must tell the compiler not to add these
+          characters to the swap() name when it is called from your program. 
+          This is taken care of in the SWAP.H file where the function
+          prototype of swap() is declared.  It hinges on "__cplusplus" being
+          defined (as it always is when doing a C++ compile).  This follows
+          the standard set with the Turbo C++ 1.0 include files.
+
+
+2.   Integrated Environment
+
+Following is a list of issues with Turbo C++ 1.0 integrated environment:
+
+     1.   Make sure the .CODE declaration in SWAP.ASM looks like this:
+
+
+
+SWAP.DOC  Copyright (C) 1990 by Marty Del Vecchio                         24
+
+
+
+
+          IF @codesize
+          .CODE   _TEXT
+          ELSE
+          .CODE
+          ENDIF
+
+          This is especially important when using the integrated environment
+          of Turbo C++ 1.0.  If the .CODE directive above were "SWAP_TEXT"
+          instead of "_TEXT", the swap() routine would be linked after all
+          of the Turbo C++ library routines (printf(), etc.).  In large
+          programs, this means that swap() would be unable to swap out large
+          chunks of your executable, partially defeating its purpose.
+
+          The ".CODE _TEXT" directive puts the swap() routine in the same
+          segment as the Turbo C++ library routines, and if you follow the
+          procedure in step 2 below, swap() will be able to swap out the
+          maximum possible amount of your program.
+
+     2.   In the Integrated Development Environment (IDE) of Turbo C++ 1.0,
+          you use project files (*.PRJ) to specify the source files and
+          object modules used to build an executable program.  These project
+          files are very different than project files from Turbo C 2.0.
+
+          The swap() object module should always be the first item listed in
+          the project file.  Please consult the Turbo C++ 1.0 manual for
+          information on creating a project file.
+
+     3.   Unless your program directly allocates extra DOS memory blocks
+          (either by calling DOS function 48 hex or by calling allocmem()),
+          you can get by without using the fragmentation feature of swap()
+          ("/DNoFrag").  However, the memory savings will be minimal, and
+          this is not recommended.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+SWAP.DOC  Copyright (C) 1990 by Marty Del Vecchio                         25
+
+
+
+
+VII. Revision History
+
+Revision  Date      Comments
+---------------------------------------------------------------------------
+ 1.00     4/1/90    Initial revision.  Supported swapping to expanded memory
+                    or disk.  Supported Small and Medium memory models.
+
+ 2.00     9/6/90    Added support for swapping to XMS extended memory. 
+                    Added support for Compact, Large, and Huge memory
+                    models.  Made .ASM source file configurable.
+
+ 2.01     9/7/90    It's always something!  SWAPTEST.LNK was missing from
+                    the release .ZIP file.  SWAP.DOC did not have page
+                    numbers in the table of contents.
+
+ 2.10     9/11/90   Added code to parse the command line into the default
+                    FCBs (thanks to David E. Jenkins).  Changed /D[model]
+                    definitions to allow assembly with Turbo Assembler.
+
+ 2.11     9/28/90   Fixed problem in SWAP.ASM (variable called cmd_pad). 
+                    This prevented execution of COMMAND.COM with arguments,
+                    as the pad byte (0) is interpreted by COMMAND.COM as the
+                    end of the command line.  Ooops!  Also, added
+                    information about using Microsoft C 6.00.
+
+ 3.00     10/4/90   Added full support for Microsoft C 6.00 large code
+                    memory models (fragmentation support).  Added complete
+                    information about compiling, assembling, and linking in
+                    all supported compiler versions and memory models. 
+                    Fixed error in disk restore routine--it wasn't deleting
+                    the swap file after it was done.  Swap() no longer
+                    supports EMS version 3.2--EMS 4.0 and above is required.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+SWAP.DOC  Copyright (C) 1990 by Marty Del Vecchio                         26
+
+
+
+
+VIII. Information
+
+     The original version of swap() was released as SWAP100.ZIP on April 1,
+1990.  That version supported swapping to expanded memory and to disk, and
+only the Small memory model was supported.
+
+     Since then, I have had many people call both to thank me (I'm blushing)
+and to request enhancements.  I am grateful to these people (Norman Hamer,
+William Wood, David Jenkins, et al) for helping to make this product more
+useful.
+
+     This version of swap(), like all previous (and future!) versions, is
+hereby released into the public domain for free use by anybody and
+everybody.  However, all the contents of this package still remain:
+
+     Copyright (C) 1990 by Marty Del Vecchio.  All Rights Reserved.
+
+     I am not requesting a donation from anybody who uses the contents of
+this package.  I just ask that everybody who does use swap() realize the
+amount of work that went into coding it, and appreciate the fact that I
+fully commented and released the source code for free.  If you use swap() in
+a commercial program, and would like it listed in this document, please
+contact me to let me know.
+
+     Everything in this package is provided with no warranties whatsoever,
+express nor implied, for any functionality or fitness for a specific
+purpose.  The author will not be held responsible for any damages whatsoever
+resulting from the use of this package, and will not be held responsible if
+the package does not perform.  User beware!
+
+My home address is:
+
+     Marty Del Vecchio
+     99 Marlboro Road
+     Southborough, MA  01772
+
+My home phone number is:
+
+     (508) 485-9718
+
+My internet mail address is:
+
+     marty@bsn.mceo.dg.com
+
+My main bulletin board is:
+
+     Channel 1 BBS
+     Boston, MA
+     (617) 354-8873
+
+
+
+
+
+SWAP.DOC  Copyright (C) 1990 by Marty Del Vecchio                         27
+
+
